@@ -2,39 +2,44 @@ import os
 import requests
 import pandas as pd
 
-api_key = os.environ["EIA_API_KEY"]
 
-url = "https://api.eia.gov/v2/electricity/rto/region-data/data/"
-params = {
-    "api_key": api_key,
-    "frequency": "hourly",
-    "data[]": "value",
-    "facets[respondent][]": "NYIS",
-    "facets[type][]": "D",
-    "start": "2026-02-20T00",
-    "end": "2026-02-21T23",
-    "length": 5000,
-}
+BASE_URL = "https://api.eia.gov/v2/electricity/rto/region-data/data/"
 
-r = requests.get(url, params=params, timeout=30)
-r.raise_for_status()
-j = r.json()
 
-# print(j.keys())
-# print("has response:", "response" in j)
-# print("total:", j.get("response", {}).get("total"))
-# print("rows:", len(j.get("response", {}).get("data", [])))
+def fetch_eia_data(
+    respondent: str,
+    data_type: str,
+    start: str,
+    end: str,
+    length: int = 5000,
+) -> pd.DataFrame:
+    api_key = os.environ["EIA_API_KEY"]
 
-# EIA sometimes nests rows under response->data; handle both cases:
-rows = (j.get("response") or {}).get("data") or j.get("data")
-eia_df = pd.DataFrame(rows)
+    params = {
+        "api_key": api_key,
+        "frequency": "hourly",
+        "data[]": "value",
+        "facets[respondent][]": respondent,
+        "facets[type][]": data_type,
+        "start": start,
+        "end": end,
+        "length": length,
+    }
 
-# EIA commonly returns numeric values as strings → parse when present
-if "value" in eia_df.columns:
-    eia_df["value"] = pd.to_numeric(eia_df["value"], errors="coerce")
+    response = requests.get(BASE_URL, params=params, timeout=30)
+    response.raise_for_status()
+    payload = response.json()
 
-eia_df["period"] = pd.to_datetime(eia_df["period"], format="%Y-%m-%dT%H", utc=True)
+    rows = (payload.get("response") or {}).get("data") or payload.get("data") or []
+    df = pd.DataFrame(rows)
 
-# print(eia_df["period"].min(), eia_df["period"].max())
+    if df.empty:
+        return df
 
-print(eia_df.shape)
+    if "value" in df.columns:
+        df["value"] = pd.to_numeric(df["value"], errors="coerce")
+
+    if "period" in df.columns:
+        df["period"] = pd.to_datetime(df["period"], format="%Y-%m-%dT%H", utc=True)
+
+    return df
