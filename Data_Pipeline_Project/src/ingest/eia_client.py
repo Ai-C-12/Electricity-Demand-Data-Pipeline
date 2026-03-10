@@ -4,7 +4,7 @@ import pandas as pd
 
 api_key = os.environ["EIA_API_KEY"]
 
-url = "https://api.eia.gov/v2/electricity/rto/region-data/data/?api_key=1hhUNnaSmhjlKCDFUYWfGnhNIryAWHX6EYcWQJgu&frequency=hourly&data[]=value&facets[respondent][]=%3CNYIS%3E&facets[type][]=D&start=2026-02-20T00&end=2026-02-21T23&sort[0][column]=period&sort[0][direction]=asc&length=10"
+url = "https://api.eia.gov/v2/electricity/rto/region-data/data/"
 params = {
     "api_key": api_key,
     "frequency": "hourly",
@@ -36,4 +36,5 @@ if "value" in eia_df.columns:
 eia_df["period"] = pd.to_datetime(eia_df["period"], format="%Y-%m-%dT%H", utc=True)
 
 # print(eia_df["period"].min(), eia_df["period"].max())
+
 print(eia_df.shape)
