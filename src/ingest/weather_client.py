@@ -44,7 +44,7 @@ def fetch_weather_data(
 
     df = pd.DataFrame(hourly_data)
 
-    df["Latitude"] = latitude
-    df["Longitude"] = longitude
+    df["latitude"] = latitude
+    df["longitude"] = longitude
 
     return df
