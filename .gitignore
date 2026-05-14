@@ -14,6 +14,7 @@ venv/
 # Python cache files
 __pycache__/
 *.pyc
+.cache.sqlite
 
 # VS Code local settings
 .vscode/
@@ -23,9 +24,11 @@ __pycache__/
 Thumbs.db
 
 # Generated data outputs
-data/raw/**/*
-data/processed/**/*
+data/raw/**
+data/processed/**
 
 # Keep empty data folder structure
+!data/raw/**/
 !data/raw/**/.gitkeep
+!data/processed/**/
 !data/processed/**/.gitkeep
