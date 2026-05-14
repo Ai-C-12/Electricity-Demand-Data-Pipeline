@@ -1,3 +1,31 @@
 # Private project planning / handoff notes
 handoff.md
 PROJECT_NOTES.md
+
+# Environment variables / secrets
+.env
+.env.*
+!.env.example
+
+# Virtual environments
+venv/
+.venv/
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# VS Code local settings
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Generated data outputs
+data/raw/**/*
+data/processed/**/*
+
+# Keep empty data folder structure
+!data/raw/**/.gitkeep
+!data/processed/**/.gitkeep
