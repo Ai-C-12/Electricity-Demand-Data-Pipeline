@@ -3,8 +3,7 @@
 A Python data engineering pipeline that ingests hourly electricity demand data from the EIA API and hourly weather data from Open-Meteo, stores raw API responses, transforms the data into processed datasets, validates schemas, and creates an analytics-ready demand-weather feature table.
 
 ## Project Status
-
-This project currently supports a local end-to-end pipeline for a 90-day dataset.
+This project currently supports a local end-to-end pipeline for a full-year hourly dataset, producing an analytics-ready demand-weather feature table with approximately 8,760 rows for one region.
 
 Current capabilities:
 
@@ -16,6 +15,7 @@ Current capabilities:
 - Validate processed datasets before saving
 - Merge electricity demand and weather data by timestamp
 - Save a partitioned analytics-ready feature dataset
+- Supports paginated EIA ingestion beyond the 5,000-row API response limit
 
 Future planned work:
 
@@ -37,7 +37,10 @@ Current development configuration:
 - Respondent: `NYIS`
 - Data type: `D` demand
 - Frequency: hourly
-- Current test range: January 1, 2026 to March 31, 2026
+- Current development range: January 1, 2026 to December 31, 2026
+
+#### EIA Pagination
+The EIA API response is limited to 5,000 rows per request, so the EIA ingestion client supports pagination using offset-based requests. Each page is collected into a combined DataFrame, while request metadata records the offset, page size, and number of rows returned for each page.
 
 ### Open-Meteo API
 
@@ -118,6 +121,8 @@ data/raw/weather_data/_runs/<run_id>/request.json
 ```
 The raw payload is saved separately from request metadata so the pipeline can preserve original API responses.
 
+For EIA data, raw payloads include paginated API responses. The request metadata tracks each page’s offset, page size, and number of rows returned.
+
 ### Processed Data
 Processed data is saved as partitioned CSV files by date.
 
@@ -143,25 +148,25 @@ Current feature columns:
 The pipeline validates data before saving processed outputs.
 
 ### check_not_empty
-Checks if the dataframe is empty or not
+Checks if the DataFrame is empty or not
 
 ### check_required_columns
-Checks whether the required columns exits in the dataframe.
+Checks whether the required columns exist in the DataFrame.
 
 ### check_no_missing_values
 Checks whether there are missing values and outputs how many there are.
 
 ### check_timestamp_format
-Checks whether the time is in corret UTC format.
+Checks whether timestamp_utc is in the correct datetime format.
 
 ### check_demand_values
-Checks whether or not demand_mwh is in proper numeric value.
+Checks whether demand_mwh is numeric and non-negative.
 
 ### check_temperature_values
-Checks whether or not temperature_2m is in proper numeric value.
+Checks whether temperature_2m is numeric.
 
 ### check_duplicate_timestamps_region
-Checks whether the merged feature pipeline contains data within the same time and region.
+Checks whether duplicate timestamp-region pairs exist in the merged feature dataset.
 
 ## Setup
 ### 1. Clone the Repository
@@ -189,6 +194,8 @@ pip install -r requirements.txt
 ```
 
 ### 4. Configure Environment Variables
+Create a local .env file or set the variable in your shell. Do not commit real API keys.
+
 Required variable:
 ```
 EIA_API_KEY=your_eia_api_key_here
@@ -214,7 +221,7 @@ python -m src.pipeline.feature_pipeline
 The feature pipeline runs the EIA pipeline, runs the weather pipeline, merges the processed outputs, validates the merged dataset, and saves the final feature table.
 
 ## Current Development Range
-The current dataset covers 90 days of data from 2026-01-01 to 2026-03-31
+The current dataset covers one year of hourly data, producing approximately 8,760 merged feature rows for the NYIS region.
 
 ## Next Steps
 1. Improve logging and pipeline run summaries
