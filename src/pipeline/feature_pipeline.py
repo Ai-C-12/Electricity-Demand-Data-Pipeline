@@ -14,14 +14,21 @@ from src.validation.checks import (
     check_temperature_values,
     check_duplicate_timestamps_region,
 )
+from src.utils.logger import get_logger
+
+logger = get_logger("src.pipeline.feature_pipeline")
 
 def run_feature_pipeline() -> pd.DataFrame:
+    logger.info("Starting feature pipeline")
+
     demand_df = run_eia_pipeline()
     weather_df = run_weather_pipeline()
+    logger.info(f"Fetched demand and weather data for feature engineering: {len(demand_df)} demand rows, {len(weather_df)} weather rows")
 
     dataset_name = "Merged feature dataset"
 
     merged_df = merge_df(demand_df, weather_df)
+    logger.info(f"Merged demand and weather data: {len(merged_df)} rows, {len(merged_df.columns)} columns")
 
     check_required_columns(
         merged_df,
@@ -35,6 +42,7 @@ def run_feature_pipeline() -> pd.DataFrame:
     check_demand_values(merged_df, dataset_name)
     check_temperature_values(merged_df, dataset_name)
     check_duplicate_timestamps_region(merged_df, dataset_name)
+    logger.info(f"Validated merged feature dataset")
 
     run_id = make_run_id()
 
@@ -44,11 +52,11 @@ def run_feature_pipeline() -> pd.DataFrame:
         df = merged_df,
         run_id = run_id,
     )
+    logger.info(f"Saved merged feature dataset. Run ID: {run_id}")
 
-    print(f"Feature pipeline completed: {len(merged_df)} rows & {len(merged_df.columns)} columns. Run ID: {run_id}")
-    
+    logger.info(f"Feature pipeline completed: {len(merged_df)} rows & {len(merged_df.columns)} columns. Run ID: {run_id}")
+
     return merged_df
 
 if __name__ == "__main__":
-    merged_df = run_feature_pipeline()
-    print(merged_df.head())
+    run_feature_pipeline()

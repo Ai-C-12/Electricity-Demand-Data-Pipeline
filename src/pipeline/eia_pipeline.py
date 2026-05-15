@@ -11,8 +11,13 @@ from src.validation.checks import (
     check_timestamp_format,
     check_demand_values,
 )
+from src.utils.logger import get_logger
+
+logger = get_logger("src.pipeline.eia_pipeline")
 
 def run_eia_pipeline() -> pd.DataFrame:
+    logger.info("Starting EIA pipeline")
+
     run_id = make_run_id()
 
     df, payload, request_meta = fetch_eia_data(
@@ -22,17 +27,21 @@ def run_eia_pipeline() -> pd.DataFrame:
         end="2026-03-31T23",
         length=5000,
     )
+    logger.info(f"Fetched raw EIA data: {len(df)} rows")
 
     check_not_empty(df, "Raw EIA data")
     check_required_columns(df, ["period", "respondent", "type", "value"], "Raw EIA data",)
+    logger.info("Validated raw EIA data")
 
     clean_df = transform_eia_data(df)
+    logger.info(f"Transformed EIA data: {clean_df.shape}")
 
     check_not_empty(clean_df, "Processed EIA data")
     check_required_columns(clean_df, ["timestamp_utc", "region", "type", "demand_mwh"], "Processed EIA data")
     check_no_missing_values(clean_df, "Processed EIA data")
     check_timestamp_format(clean_df, "Processed EIA data")
     check_demand_values(clean_df, "Processed EIA data")
+    logger.info("Validated processed EIA data")
 
     save_raw_per_run(
         base_dir = RAW_DIR,
@@ -41,6 +50,7 @@ def run_eia_pipeline() -> pd.DataFrame:
         payload = payload,
         request_meta = request_meta,
     )
+    logger.info(f"Saved raw EIA payload and request metadata. Run ID: {run_id}")
 
     save_partitioned_csv(
         base_dir =  PROCESSED_DIR,
@@ -48,10 +58,10 @@ def run_eia_pipeline() -> pd.DataFrame:
         df = clean_df,
         run_id = run_id,
     )
+    logger.info(f"Saved processed EIA data. Run ID: {run_id}")
 
-    print(f"EIA pipeline completed. Run ID: {run_id}")
-    print(clean_df.head())
-    print(clean_df.shape)
+    logger.info(f"EIA pipeline completed. Run ID: {run_id}")
+    logger.info(f"Processed EIA shape: {clean_df.shape}")
 
     return clean_df
 
