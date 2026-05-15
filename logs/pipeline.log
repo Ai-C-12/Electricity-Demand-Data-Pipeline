@@ -1,96 +1,24 @@
-2026-05-15 16:54:20,932 | INFO | __main__ | Starting feature pipeline
-2026-05-15 16:54:20,932 | INFO | src.pipeline.eia_pipeline | Starting EIA pipeline
-2026-05-15 16:54:23,502 | INFO | src.pipeline.eia_pipeline | Fetched raw EIA data: 2160 rows
-2026-05-15 16:54:23,502 | INFO | src.pipeline.eia_pipeline | Validated raw EIA data
-2026-05-15 16:54:23,510 | INFO | src.pipeline.eia_pipeline | Transformed EIA data: (2160, 4)
-2026-05-15 16:54:23,512 | INFO | src.pipeline.eia_pipeline | Validated processed EIA data
-2026-05-15 16:54:23,539 | INFO | src.pipeline.eia_pipeline | Saved raw EIA payload and request metadata. Run ID: 20260515T205420Z
-2026-05-15 16:54:23,875 | INFO | src.pipeline.eia_pipeline | Saved processed EIA data. Run ID: 20260515T205420Z
-2026-05-15 16:54:23,876 | INFO | src.pipeline.eia_pipeline | EIA pipeline completed. Run ID: 20260515T205420Z
-2026-05-15 16:54:23,877 | INFO | src.pipeline.eia_pipeline | Processed EIA shape: (2160, 4)
-2026-05-15 16:54:23,878 | INFO | src.pipeline.weather_pipeline | Starting weather pipeline
-2026-05-15 16:54:25,164 | INFO | src.pipeline.weather_pipeline | Fetched raw weather data: 2160 rows
-2026-05-15 16:54:25,171 | INFO | src.pipeline.weather_pipeline | Validated raw weather data
-2026-05-15 16:54:25,176 | INFO | src.pipeline.weather_pipeline | Transformed weather data: (2160, 4)
-2026-05-15 16:54:25,177 | INFO | src.pipeline.weather_pipeline | Validated processed weather data
-2026-05-15 16:54:25,184 | INFO | src.pipeline.weather_pipeline | Saved raw weather payload and request metadata. Run ID: 20260515T205423Z
-2026-05-15 16:54:25,690 | INFO | src.pipeline.weather_pipeline | Saved processed weather data. Run ID: 20260515T205423Z
-2026-05-15 16:54:25,691 | INFO | src.pipeline.weather_pipeline | Weather pipeline completed. Run ID: 20260515T205423Z
-2026-05-15 16:54:25,691 | INFO | src.pipeline.weather_pipeline | Processed weather shape: (2160, 4)
-2026-05-15 16:54:25,691 | INFO | __main__ | Fetched demand and weather data for feature engineering: 2160 demand rows, 2160 weather rows
-2026-05-15 16:54:25,695 | INFO | __main__ | Merged demand and weather data: 2160 rows, 7 columns
-2026-05-15 16:54:25,697 | INFO | __main__ | Validated merged feature dataset
-2026-05-15 16:54:26,085 | INFO | __main__ | Saved merged feature dataset. Run ID: 20260515T205425Z
-2026-05-15 16:54:26,086 | INFO | __main__ | Feature pipeline completed: 2160 rows & 7 columns. Run ID: 20260515T205425Z
-2026-05-15 16:57:35,242 | INFO | src.pipeline.feature_pipeline | Starting feature pipeline
-2026-05-15 16:57:35,243 | INFO | src.pipeline.eia_pipeline | Starting EIA pipeline
-2026-05-15 16:57:37,045 | INFO | src.pipeline.eia_pipeline | Fetched raw EIA data: 2160 rows
-2026-05-15 16:57:37,046 | INFO | src.pipeline.eia_pipeline | Validated raw EIA data
-2026-05-15 16:57:37,054 | INFO | src.pipeline.eia_pipeline | Transformed EIA data: (2160, 4)
-2026-05-15 16:57:37,056 | INFO | src.pipeline.eia_pipeline | Validated processed EIA data
-2026-05-15 16:57:37,088 | INFO | src.pipeline.eia_pipeline | Saved raw EIA payload and request metadata. Run ID: 20260515T205735Z
-2026-05-15 16:57:37,470 | INFO | src.pipeline.eia_pipeline | Saved processed EIA data. Run ID: 20260515T205735Z
-2026-05-15 16:57:37,471 | INFO | src.pipeline.eia_pipeline | EIA pipeline completed. Run ID: 20260515T205735Z
-2026-05-15 16:57:37,471 | INFO | src.pipeline.eia_pipeline | Processed EIA shape: (2160, 4)
-2026-05-15 16:57:37,471 | INFO | src.pipeline.weather_pipeline | Starting weather pipeline
-2026-05-15 16:57:38,206 | INFO | src.pipeline.weather_pipeline | Fetched raw weather data: 2160 rows
-2026-05-15 16:57:38,207 | INFO | src.pipeline.weather_pipeline | Validated raw weather data
-2026-05-15 16:57:38,212 | INFO | src.pipeline.weather_pipeline | Transformed weather data: (2160, 4)
-2026-05-15 16:57:38,214 | INFO | src.pipeline.weather_pipeline | Validated processed weather data
-2026-05-15 16:57:38,226 | INFO | src.pipeline.weather_pipeline | Saved raw weather payload and request metadata. Run ID: 20260515T205737Z
-2026-05-15 16:57:38,612 | INFO | src.pipeline.weather_pipeline | Saved processed weather data. Run ID: 20260515T205737Z
-2026-05-15 16:57:38,613 | INFO | src.pipeline.weather_pipeline | Weather pipeline completed. Run ID: 20260515T205737Z
-2026-05-15 16:57:38,614 | INFO | src.pipeline.weather_pipeline | Processed weather shape: (2160, 4)
-2026-05-15 16:57:38,615 | INFO | src.pipeline.feature_pipeline | Fetched demand and weather data for feature engineering: 2160 demand rows, 2160 weather rows
-2026-05-15 16:57:38,622 | INFO | src.pipeline.feature_pipeline | Merged demand and weather data: 2160 rows, 7 columns
-2026-05-15 16:57:38,625 | INFO | src.pipeline.feature_pipeline | Validated merged feature dataset
-2026-05-15 16:57:39,021 | INFO | src.pipeline.feature_pipeline | Saved merged feature dataset. Run ID: 20260515T205738Z
-2026-05-15 16:57:39,021 | INFO | src.pipeline.feature_pipeline | Feature pipeline completed: 2160 rows & 7 columns. Run ID: 20260515T205738Z
-2026-05-15 17:05:21,171 | INFO | src.pipeline.feature_pipeline | Starting feature pipeline
-2026-05-15 17:05:21,172 | INFO | src.pipeline.eia_pipeline | Starting EIA pipeline
-2026-05-15 17:05:23,079 | INFO | src.pipeline.eia_pipeline | Fetched raw EIA data: 2160 rows
-2026-05-15 17:05:23,080 | INFO | src.pipeline.eia_pipeline | Validated raw EIA data
-2026-05-15 17:05:23,090 | INFO | src.pipeline.eia_pipeline | Transformed EIA data: (2160, 4)
-2026-05-15 17:05:23,092 | INFO | src.pipeline.eia_pipeline | Validated processed EIA data
-2026-05-15 17:05:23,134 | INFO | src.pipeline.eia_pipeline | Saved raw EIA payload and request metadata. Run ID: 20260515T210521Z
-2026-05-15 17:05:23,472 | INFO | src.pipeline.eia_pipeline | Saved processed EIA data. Run ID: 20260515T210521Z
-2026-05-15 17:05:23,473 | INFO | src.pipeline.eia_pipeline | EIA pipeline completed. Run ID: 20260515T210521Z
-2026-05-15 17:05:23,474 | INFO | src.pipeline.eia_pipeline | Processed EIA shape: (2160, 4)
-2026-05-15 17:05:23,476 | INFO | src.pipeline.weather_pipeline | Starting weather pipeline
-2026-05-15 17:05:23,987 | INFO | src.pipeline.weather_pipeline | Fetched raw weather data: 2160 rows
-2026-05-15 17:05:23,991 | INFO | src.pipeline.weather_pipeline | Validated raw weather data
-2026-05-15 17:05:23,997 | INFO | src.pipeline.weather_pipeline | Transformed weather data: (2160, 4)
-2026-05-15 17:05:24,000 | INFO | src.pipeline.weather_pipeline | Validated processed weather data
-2026-05-15 17:05:24,007 | INFO | src.pipeline.weather_pipeline | Saved raw weather payload and request metadata. Run ID: 20260515T210523Z
-2026-05-15 17:05:24,421 | INFO | src.pipeline.weather_pipeline | Saved processed weather data. Run ID: 20260515T210523Z
-2026-05-15 17:05:24,422 | INFO | src.pipeline.weather_pipeline | Weather pipeline completed. Run ID: 20260515T210523Z
-2026-05-15 17:05:24,423 | INFO | src.pipeline.weather_pipeline | Processed weather shape: (2160, 4)
-2026-05-15 17:05:24,425 | INFO | src.pipeline.feature_pipeline | Fetched demand and weather data for feature engineering: 2160 demand rows, 2160 weather rows
-2026-05-15 17:05:24,430 | INFO | src.pipeline.feature_pipeline | Merged demand and weather data: 2160 rows, 7 columns
-2026-05-15 17:05:24,432 | INFO | src.pipeline.feature_pipeline | Validated merged feature dataset
-2026-05-15 17:05:24,823 | INFO | src.pipeline.feature_pipeline | Saved merged feature dataset. Run ID: 20260515T210524Z
-2026-05-15 17:05:24,824 | INFO | src.pipeline.feature_pipeline | Feature pipeline completed: 2160 rows & 7 columns. Run ID: 20260515T210524Z
-2026-05-15 17:11:49,015 | INFO | src.pipeline.feature_pipeline | Starting feature pipeline
-2026-05-15 17:11:49,015 | INFO | src.pipeline.eia_pipeline | Starting EIA pipeline
-2026-05-15 17:11:50,513 | INFO | src.pipeline.eia_pipeline | Fetched raw EIA data: 2160 rows
-2026-05-15 17:11:50,513 | INFO | src.pipeline.eia_pipeline | Validated raw EIA data
-2026-05-15 17:11:50,520 | INFO | src.pipeline.eia_pipeline | Transformed EIA data: (2160, 4)
-2026-05-15 17:11:50,523 | INFO | src.pipeline.eia_pipeline | Validated processed EIA data
-2026-05-15 17:11:50,547 | INFO | src.pipeline.eia_pipeline | Saved raw EIA payload and request metadata. Run ID: 20260515T211149Z
-2026-05-15 17:11:51,053 | INFO | src.pipeline.eia_pipeline | Saved processed EIA data. Run ID: 20260515T211149Z
-2026-05-15 17:11:51,053 | INFO | src.pipeline.eia_pipeline | EIA pipeline completed. Run ID: 20260515T211149Z
-2026-05-15 17:11:51,054 | INFO | src.pipeline.eia_pipeline | Processed EIA shape: (2160, 4)
-2026-05-15 17:11:51,054 | INFO | src.pipeline.weather_pipeline | Starting weather pipeline
-2026-05-15 17:11:51,735 | INFO | src.pipeline.weather_pipeline | Fetched raw weather data: 2160 rows
-2026-05-15 17:11:51,736 | INFO | src.pipeline.weather_pipeline | Validated raw weather data
-2026-05-15 17:11:51,740 | INFO | src.pipeline.weather_pipeline | Transformed weather data: (2160, 4)
-2026-05-15 17:11:51,741 | INFO | src.pipeline.weather_pipeline | Validated processed weather data
-2026-05-15 17:11:51,752 | INFO | src.pipeline.weather_pipeline | Saved raw weather payload and request metadata. Run ID: 20260515T211151Z
-2026-05-15 17:11:52,065 | INFO | src.pipeline.weather_pipeline | Saved processed weather data. Run ID: 20260515T211151Z
-2026-05-15 17:11:52,065 | INFO | src.pipeline.weather_pipeline | Weather pipeline completed. Run ID: 20260515T211151Z
-2026-05-15 17:11:52,066 | INFO | src.pipeline.weather_pipeline | Processed weather shape: (2160, 4)
-2026-05-15 17:11:52,066 | INFO | src.pipeline.feature_pipeline | Fetched demand and weather data for feature engineering: 2160 demand rows, 2160 weather rows
-2026-05-15 17:11:52,069 | INFO | src.pipeline.feature_pipeline | Merged demand and weather data: 2160 rows, 7 columns
-2026-05-15 17:11:52,070 | INFO | src.pipeline.feature_pipeline | Validated merged feature dataset
-2026-05-15 17:11:52,486 | INFO | src.pipeline.feature_pipeline | Saved merged feature dataset. Run ID: 20260515T211152Z
-2026-05-15 17:11:52,487 | INFO | src.pipeline.feature_pipeline | Feature pipeline completed: 2160 rows & 7 columns. Run ID: 20260515T211152Z
+2026-05-15 17:20:15,803 | INFO | src.pipeline.feature_pipeline | Starting feature pipeline
+2026-05-15 17:20:15,803 | INFO | src.pipeline.eia_pipeline | Starting EIA pipeline
+2026-05-15 17:20:17,178 | INFO | src.pipeline.eia_pipeline | Fetched raw EIA data: 5000 rows
+2026-05-15 17:20:17,178 | INFO | src.pipeline.eia_pipeline | Validated raw EIA data
+2026-05-15 17:20:17,192 | INFO | src.pipeline.eia_pipeline | Transformed EIA data: (5000, 4)
+2026-05-15 17:20:17,196 | INFO | src.pipeline.eia_pipeline | Validated processed EIA data
+2026-05-15 17:20:17,259 | INFO | src.pipeline.eia_pipeline | Saved raw EIA payload and request metadata. Run ID: 20260515T212015Z
+2026-05-15 17:20:17,823 | INFO | src.pipeline.eia_pipeline | Saved processed EIA data. Run ID: 20260515T212015Z
+2026-05-15 17:20:17,823 | INFO | src.pipeline.eia_pipeline | EIA pipeline completed. Run ID: 20260515T212015Z
+2026-05-15 17:20:17,823 | INFO | src.pipeline.eia_pipeline | Processed EIA shape: (5000, 4)
+2026-05-15 17:20:17,824 | INFO | src.pipeline.weather_pipeline | Starting weather pipeline
+2026-05-15 17:20:18,633 | INFO | src.pipeline.weather_pipeline | Fetched raw weather data: 8760 rows
+2026-05-15 17:20:18,634 | INFO | src.pipeline.weather_pipeline | Validated raw weather data
+2026-05-15 17:20:18,643 | INFO | src.pipeline.weather_pipeline | Transformed weather data: (8760, 4)
+2026-05-15 17:20:18,644 | INFO | src.pipeline.weather_pipeline | Validated processed weather data
+2026-05-15 17:20:18,659 | INFO | src.pipeline.weather_pipeline | Saved raw weather payload and request metadata. Run ID: 20260515T212017Z
+2026-05-15 17:20:19,975 | INFO | src.pipeline.weather_pipeline | Saved processed weather data. Run ID: 20260515T212017Z
+2026-05-15 17:20:19,976 | INFO | src.pipeline.weather_pipeline | Weather pipeline completed. Run ID: 20260515T212017Z
+2026-05-15 17:20:19,976 | INFO | src.pipeline.weather_pipeline | Processed weather shape: (8760, 4)
+2026-05-15 17:20:19,976 | INFO | src.pipeline.feature_pipeline | Fetched demand and weather data for feature engineering: 5000 demand rows, 8760 weather rows
+2026-05-15 17:20:19,980 | INFO | src.pipeline.feature_pipeline | Merged demand and weather data: 5000 rows, 7 columns
+2026-05-15 17:20:19,982 | INFO | src.pipeline.feature_pipeline | Validated merged feature dataset
+2026-05-15 17:20:20,455 | INFO | src.pipeline.feature_pipeline | Saved merged feature dataset. Run ID: 20260515T212019Z
+2026-05-15 17:20:20,456 | INFO | src.pipeline.feature_pipeline | Feature pipeline completed: 5000 rows & 7 columns. Run ID: 20260515T212019Z

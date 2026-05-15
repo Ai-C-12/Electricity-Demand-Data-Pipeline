@@ -32,7 +32,7 @@ def run_eia_pipeline() -> pd.DataFrame:
         data_type=DEFAULT_EIA_TYPE,
         start=EIA_START,
         end=EIA_END,
-        length=5000,
+        length=10000,
     )
     logger.info(f"Fetched raw EIA data: {len(df)} rows")
 
