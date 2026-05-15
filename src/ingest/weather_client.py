@@ -1,5 +1,6 @@
 import openmeteo_requests
 import pandas as pd
+import requests
 import requests_cache
 from retry_requests import retry
 
@@ -10,7 +11,7 @@ def fetch_weather_data(
     start_date: str,
     end_date: str,
     hourly_variable: str = "temperature_2m",
-) -> pd.DataFrame:
+) -> tuple[pd.DataFrame, dict, dict]:
     cache_session = requests_cache.CachedSession(".cache", expire_after=3600)
     retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
     openmeteo = openmeteo_requests.Client(session=retry_session)
@@ -26,8 +27,22 @@ def fetch_weather_data(
         "timezone": "UTC",
     }
 
+    request_meta = {
+        "source": "openmeteo",
+        "latitude": latitude,
+        "longitude": longitude,
+        "start_date": start_date,
+        "end_date": end_date,
+        "hourly_variable": hourly_variable,
+        "timezone": "UTC",
+    }
+
     responses = openmeteo.weather_api(url, params=params)
     response = responses[0]
+
+    raw_response = requests.get(url, params=params, timeout=30)
+    raw_response.raise_for_status()
+    payload = raw_response.json()
 
     hourly = response.Hourly()
 
@@ -47,4 +62,4 @@ def fetch_weather_data(
     df["latitude"] = latitude
     df["longitude"] = longitude
 
-    return df
+    return df, payload, request_meta

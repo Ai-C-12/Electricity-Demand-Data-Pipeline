@@ -1,11 +1,12 @@
 from src.ingest.weather_client import fetch_weather_data
 from src.transform.weather_transform import transform_weather_data
-from src.storage.write_raw import make_run_id, save_partitioned_csv
+from src.storage.write_raw import make_run_id, save_raw_per_run, save_partitioned_csv
+from src.storage.paths import RAW_DIR, PROCESSED_DIR
 
 def run_weather_pipeline() -> None:
     run_id = make_run_id()
 
-    df = fetch_weather_data(
+    df, payload, request_meta = fetch_weather_data(
         latitude=40.7128,
         longitude=-74.0060,
         start_date="2026-02-20",
@@ -13,10 +14,18 @@ def run_weather_pipeline() -> None:
         hourly_variable="temperature_2m",
     )
 
+    save_raw_per_run(
+        base_dir = RAW_DIR,
+        source = "weather_data",
+        run_id = run_id,
+        payload = payload,
+        request_meta = request_meta,
+    )
+
     clean_df = transform_weather_data(df)
 
     save_partitioned_csv(
-        base_dir =  "data/processed",
+        base_dir =  PROCESSED_DIR,
         source = "weather_data",
         df = clean_df,
         run_id = run_id,

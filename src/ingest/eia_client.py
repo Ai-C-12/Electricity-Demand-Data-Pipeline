@@ -26,6 +26,16 @@ def fetch_eia_data(
         "length": length,
     }
 
+    request_meta = {
+        "source": "eia",
+        "frequency": "hourly",
+        "respondent": respondent,
+        "type": data_type,
+        "start": start,
+        "end": end,
+        "length": length,
+    }
+
     response = requests.get(BASE_URL, params=params, timeout=30)
     response.raise_for_status()
     payload = response.json()
@@ -42,4 +52,4 @@ def fetch_eia_data(
     if "period" in df.columns:
         df["period"] = pd.to_datetime(df["period"], format="%Y-%m-%dT%H", utc=True)
 
-    return df
+    return df, payload, request_meta

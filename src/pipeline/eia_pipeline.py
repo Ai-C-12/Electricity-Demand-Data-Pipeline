@@ -1,11 +1,12 @@
 from src.ingest.eia_client import fetch_eia_data
 from src.transform.eia_transform import transform_eia_data
-from src.storage.write_raw import make_run_id, save_partitioned_csv
+from src.storage.write_raw import make_run_id, save_raw_per_run, save_partitioned_csv 
+from src.storage.paths import RAW_DIR, PROCESSED_DIR
 
 def run_eia_pipeline() -> None:
     run_id = make_run_id()
 
-    df = fetch_eia_data(
+    df, payload, request_meta = fetch_eia_data(
         respondent="NYIS",
         data_type="D",
         start="2026-02-20T00",
@@ -13,10 +14,18 @@ def run_eia_pipeline() -> None:
         length=5000,
     )
 
+    save_raw_per_run(
+        base_dir = RAW_DIR,
+        source = "eia_region_data",
+        run_id = run_id,
+        payload = payload,
+        request_meta = request_meta,
+    )
+
     clean_df = transform_eia_data(df)
 
     save_partitioned_csv(
-        base_dir =  "data/processed",
+        base_dir =  PROCESSED_DIR,
         source = "eia_region_data",
         df = clean_df,
         run_id = run_id,
