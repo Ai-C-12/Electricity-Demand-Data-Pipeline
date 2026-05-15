@@ -32,7 +32,7 @@ def run_eia_pipeline() -> pd.DataFrame:
         data_type=DEFAULT_EIA_TYPE,
         start=EIA_START,
         end=EIA_END,
-        length=10000,
+        length=5000,  # Max page size for EIA API
     )
     logger.info(f"Fetched raw EIA data: {len(df)} rows")
 
