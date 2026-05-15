@@ -54,8 +54,7 @@ Current development configuration:
 - Variable: `temperature_2m`
 
 ## Pipeline Architecture
-
-```
+<pre>
 EIA API -----------\
                    \
                     → Ingest → Raw Storage → Transform → Validate → Processed Data
@@ -64,7 +63,7 @@ Open-Meteo API ----/
 
 Processed EIA Data + Processed Weather Data
                     → Merge → Validate → Feature Dataset
-```
+</pre>
 
 ## Project Structure
 <pre>
