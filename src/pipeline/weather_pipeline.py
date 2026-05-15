@@ -11,8 +11,8 @@ def run_weather_pipeline() -> pd.DataFrame:
     df, payload, request_meta = fetch_weather_data(
         latitude=40.7128,
         longitude=-74.0060,
-        start_date="2026-02-01",
-        end_date="2026-03-02",
+        start_date="2026-01-01",
+        end_date="2026-03-31",
         hourly_variable="temperature_2m",
     )
 

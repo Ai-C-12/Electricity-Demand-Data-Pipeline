@@ -11,8 +11,8 @@ def run_eia_pipeline() -> pd.DataFrame:
     df, payload, request_meta = fetch_eia_data(
         respondent="NYIS",
         data_type="D",
-        start="2026-02-01T00",
-        end="2026-03-02T23",
+        start="2026-01-01T00",
+        end="2026-03-31T23",
         length=5000,
     )
 
