@@ -12,7 +12,7 @@ def fetch_eia_data(
     start: str,
     end: str,
     length: int = 5000,
-) -> pd.DataFrame:
+) -> tuple[pd.DataFrame, dict, dict]:
     api_key = os.environ["EIA_API_KEY"]
 
     params = {
