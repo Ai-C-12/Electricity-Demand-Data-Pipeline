@@ -20,4 +20,20 @@ def merge_df(
     if merged_df.empty:
         raise ValueError("Merged dataset is empty. Check timestamp overlap between demand and weather data.")
 
+    merged_df["hour"] = merged_df["timestamp_utc"].dt.hour
+    merged_df["day_of_week"] = merged_df["timestamp_utc"].dt.dayofweek
+    merged_df["month"] = merged_df["timestamp_utc"].dt.month
+
+    merged_df = merged_df[
+        [
+            "timestamp_utc",
+            "region",
+            "demand_mwh",
+            "temperature_2m",
+            "hour",
+            "day_of_week",
+            "month",
+        ]
+    ]
+
     return merged_df

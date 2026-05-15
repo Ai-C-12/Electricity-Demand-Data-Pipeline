@@ -12,26 +12,7 @@ def run_feature_pipeline() -> pd.DataFrame:
 
     merged_df = merge_df(demand_df, weather_df)
 
-    merged_df["hour"] = merged_df["timestamp_utc"].dt.hour
-    merged_df["day_of_week"] = merged_df["timestamp_utc"].dt.dayofweek
-    merged_df["month"] = merged_df["timestamp_utc"].dt.month
-
     run_id = make_run_id()
-
-    merged_df = merged_df[
-        [
-            "timestamp_utc",
-            "region",
-            "type",
-            "demand_mwh",
-            "latitude",
-            "longitude",
-            "temperature_2m",
-            "hour",
-            "day_of_week",
-            "month",
-        ]
-    ]
 
     save_partitioned_csv(
         base_dir =  PROCESSED_DIR,

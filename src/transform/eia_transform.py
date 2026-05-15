@@ -24,7 +24,7 @@ def transform_eia_data(df: pd.DataFrame) -> pd.DataFrame:
     df = df[
         [
             "timestamp_utc",
-            "respondent",
+            "region",
             "type",
             "demand_mwh",
         ]
