@@ -15,6 +15,7 @@ from src.validation.checks import (
     check_duplicate_timestamps_region,
 )
 from src.utils.logger import get_logger
+from src.config import FEATURE_SOURCE
 
 logger = get_logger("src.pipeline.feature_pipeline")
 
@@ -48,7 +49,7 @@ def run_feature_pipeline() -> pd.DataFrame:
 
     save_partitioned_csv(
         base_dir =  PROCESSED_DIR,
-        source = "demand_weather_features",
+        source = FEATURE_SOURCE,
         df = merged_df,
         run_id = run_id,
     )

@@ -12,6 +12,14 @@ from src.validation.checks import (
     check_temperature_values,
 )
 from src.utils.logger import get_logger
+from src.config import (
+    WEATHER_LATITUDE,
+    WEATHER_LONGITUDE,
+    WEATHER_SOURCE,
+    WEATHER_START_DATE,
+    WEATHER_END_DATE,
+    WEATHER_HOURLY_VARIABLE,
+)
 
 logger = get_logger("src.pipeline.weather_pipeline")
 
@@ -21,11 +29,11 @@ def run_weather_pipeline() -> pd.DataFrame:
     run_id = make_run_id()
 
     df, payload, request_meta = fetch_weather_data(
-        latitude=40.7128,
-        longitude=-74.0060,
-        start_date="2026-01-01",
-        end_date="2026-03-31",
-        hourly_variable="temperature_2m",
+        latitude=WEATHER_LATITUDE,
+        longitude=WEATHER_LONGITUDE,
+        start_date=WEATHER_START_DATE,
+        end_date=WEATHER_END_DATE,
+        hourly_variable=WEATHER_HOURLY_VARIABLE,
     )
     logger.info(f"Fetched raw weather data: {len(df)} rows")
 
@@ -45,7 +53,7 @@ def run_weather_pipeline() -> pd.DataFrame:
 
     save_raw_per_run(
         base_dir = RAW_DIR,
-        source = "weather_data",
+        source = WEATHER_SOURCE,
         run_id = run_id,
         payload = payload,
         request_meta = request_meta,
@@ -54,7 +62,7 @@ def run_weather_pipeline() -> pd.DataFrame:
 
     save_partitioned_csv(
         base_dir =  PROCESSED_DIR,
-        source = "weather_data",
+        source = WEATHER_SOURCE,
         df = clean_df,
         run_id = run_id,
     )

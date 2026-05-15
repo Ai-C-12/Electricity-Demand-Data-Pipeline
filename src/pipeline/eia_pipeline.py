@@ -12,6 +12,13 @@ from src.validation.checks import (
     check_demand_values,
 )
 from src.utils.logger import get_logger
+from src.config import (
+    DEFAULT_RESPONDENT,
+    DEFAULT_EIA_TYPE,
+    EIA_SOURCE,
+    EIA_START,
+    EIA_END
+)
 
 logger = get_logger("src.pipeline.eia_pipeline")
 
@@ -21,10 +28,10 @@ def run_eia_pipeline() -> pd.DataFrame:
     run_id = make_run_id()
 
     df, payload, request_meta = fetch_eia_data(
-        respondent="NYIS",
-        data_type="D",
-        start="2026-01-01T00",
-        end="2026-03-31T23",
+        respondent=DEFAULT_RESPONDENT,
+        data_type=DEFAULT_EIA_TYPE,
+        start=EIA_START,
+        end=EIA_END,
         length=5000,
     )
     logger.info(f"Fetched raw EIA data: {len(df)} rows")
@@ -45,7 +52,7 @@ def run_eia_pipeline() -> pd.DataFrame:
 
     save_raw_per_run(
         base_dir = RAW_DIR,
-        source = "eia_region_data",
+        source = EIA_SOURCE,
         run_id = run_id,
         payload = payload,
         request_meta = request_meta,
@@ -54,7 +61,7 @@ def run_eia_pipeline() -> pd.DataFrame:
 
     save_partitioned_csv(
         base_dir =  PROCESSED_DIR,
-        source = "eia_region_data",
+        source = EIA_SOURCE,
         df = clean_df,
         run_id = run_id,
     )
