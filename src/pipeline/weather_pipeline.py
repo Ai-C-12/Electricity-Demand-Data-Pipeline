@@ -4,6 +4,12 @@ from src.ingest.weather_client import fetch_weather_data
 from src.transform.weather_transform import transform_weather_data
 from src.storage.write_raw import make_run_id, save_raw_per_run, save_partitioned_csv
 from src.storage.paths import RAW_DIR, PROCESSED_DIR
+from src.validation.checks import (
+    check_not_empty,
+    check_required_columns,
+    check_no_missing_values,
+    check_timestamp_format,
+)
 
 def run_weather_pipeline() -> pd.DataFrame:
     run_id = make_run_id()
@@ -16,6 +22,16 @@ def run_weather_pipeline() -> pd.DataFrame:
         hourly_variable="temperature_2m",
     )
 
+    check_not_empty(df, "Raw weather data")
+    check_required_columns(df, ["date", "temperature_2m", "longitude", "latitude"], "Raw weather data")
+
+    clean_df = transform_weather_data(df)
+
+    check_not_empty(clean_df, "Processed weather data")
+    check_required_columns(clean_df, ["timestamp_utc", "latitude", "longitude", "temperature_2m"], "Processed weather data")
+    check_no_missing_values(clean_df, "Processed weather data")
+    check_timestamp_format(clean_df, "Processed weather data")
+
     save_raw_per_run(
         base_dir = RAW_DIR,
         source = "weather_data",
@@ -23,8 +39,6 @@ def run_weather_pipeline() -> pd.DataFrame:
         payload = payload,
         request_meta = request_meta,
     )
-
-    clean_df = transform_weather_data(df)
 
     save_partitioned_csv(
         base_dir =  PROCESSED_DIR,

@@ -1,5 +1,10 @@
 import pandas as pd
 
+def check_not_empty(df: pd.DataFrame, dataset_name: str) -> None:
+    if df.empty:
+        raise ValueError(f"{dataset_name} is empty.")
+
+
 def check_required_columns(df: pd.DataFrame, required_columns: list[str], dataset_name: str,) -> None:
     missing_columns = [col for col in required_columns if col not in df.columns]
 
@@ -23,6 +28,11 @@ def check_demand_values(df: pd.DataFrame, dataset_name: str) -> None:
 
     if (df["demand_mwh"] < 0).any():
         raise ValueError(f"{dataset_name} contains negative values in demand_mwh column.")
+    
+
+def check_temperature_values(df: pd.DataFrame, dataset_name: str) -> None:
+    if not pd.api.types.is_numeric_dtype(df["temperature_2m"]):
+        raise ValueError(f"{dataset_name}'s temperature_2m column must be numeric.")
     
 
 def check_duplicate_timestamps_region(df: pd.DataFrame, dataset_name: str) -> None:
