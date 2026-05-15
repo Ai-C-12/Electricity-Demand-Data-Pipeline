@@ -35,5 +35,7 @@ def run_eia_pipeline() -> None:
     print(clean_df.head())
     print(clean_df.shape)
 
+    return clean_df
+
 if __name__ == "__main__":
     run_eia_pipeline()
