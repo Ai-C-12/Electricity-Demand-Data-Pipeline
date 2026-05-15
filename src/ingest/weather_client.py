@@ -59,6 +59,9 @@ def fetch_weather_data(
 
     df = pd.DataFrame(hourly_data)
 
+    if df.empty:
+        return df, payload, request_meta
+
     df["latitude"] = latitude
     df["longitude"] = longitude
 

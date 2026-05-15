@@ -44,7 +44,7 @@ def fetch_eia_data(
     df = pd.DataFrame(rows)
 
     if df.empty:
-        return df
+        return df, payload, request_meta
 
     if "value" in df.columns:
         df["value"] = pd.to_numeric(df["value"], errors="coerce")
