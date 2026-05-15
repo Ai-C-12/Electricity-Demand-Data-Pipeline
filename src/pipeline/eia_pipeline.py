@@ -1,9 +1,11 @@
+import pandas as pd
+
 from src.ingest.eia_client import fetch_eia_data
 from src.transform.eia_transform import transform_eia_data
 from src.storage.write_raw import make_run_id, save_raw_per_run, save_partitioned_csv 
 from src.storage.paths import RAW_DIR, PROCESSED_DIR
 
-def run_eia_pipeline() -> None:
+def run_eia_pipeline() -> pd.DataFrame:
     run_id = make_run_id()
 
     df, payload, request_meta = fetch_eia_data(

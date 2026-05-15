@@ -16,6 +16,11 @@ def transform_eia_data(df: pd.DataFrame) -> pd.DataFrame:
     df = df.rename(columns={"value": "demand_mwh"})
     df["demand_mwh"] = pd.to_numeric(df["demand_mwh"], errors="coerce")
 
+    df = df.rename(columns={"respondent": "region"})
+
+    df = df.dropna(subset=["timestamp_utc", "demand_mwh"])
+    df = df.sort_values("timestamp_utc").reset_index(drop=True)
+
     df = df[
         [
             "timestamp_utc",

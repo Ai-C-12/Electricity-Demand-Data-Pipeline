@@ -4,7 +4,7 @@ def merge_df(
     demand_df: pd.DataFrame,
     weather_df: pd.DataFrame,
 ) -> pd.DataFrame:
-    required_demand_cols = {"timestamp_utc", "respondent", "demand_mwh"}
+    required_demand_cols = {"timestamp_utc", "region", "demand_mwh"}
     required_weather_cols = {"timestamp_utc", "temperature_2m"}
 
     for col in required_demand_cols:

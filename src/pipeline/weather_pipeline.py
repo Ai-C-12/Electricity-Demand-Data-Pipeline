@@ -1,9 +1,11 @@
+import pandas as pd
+
 from src.ingest.weather_client import fetch_weather_data
 from src.transform.weather_transform import transform_weather_data
 from src.storage.write_raw import make_run_id, save_raw_per_run, save_partitioned_csv
 from src.storage.paths import RAW_DIR, PROCESSED_DIR
 
-def run_weather_pipeline() -> None:
+def run_weather_pipeline() -> pd.DataFrame:
     run_id = make_run_id()
 
     df, payload, request_meta = fetch_weather_data(

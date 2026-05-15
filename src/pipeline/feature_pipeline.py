@@ -21,7 +21,7 @@ def run_feature_pipeline() -> pd.DataFrame:
     merged_df = merged_df[
         [
             "timestamp_utc",
-            "respondent",
+            "region",
             "type",
             "demand_mwh",
             "latitude",

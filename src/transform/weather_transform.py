@@ -16,6 +16,7 @@ def transform_weather_data(df: pd.DataFrame) -> pd.DataFrame:
     df["temperature_2m"] = pd.to_numeric(df["temperature_2m"], errors="coerce")
 
     df = df.dropna(subset=["timestamp_utc", "temperature_2m"])
+    df = df.sort_values("timestamp_utc").reset_index(drop=True)
 
     df = df[
         [
