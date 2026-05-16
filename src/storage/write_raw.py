@@ -40,16 +40,16 @@ def save_partitioned_csv(
 
     df = df.copy()
 
-    df["year"] = df["timestamp_utc"].dt.year
-    df["month"] = df["timestamp_utc"].dt.strftime("%m")
-    df["day"] = df["timestamp_utc"].dt.strftime("%d")
+    df["_partition_year"] = df["timestamp_utc"].dt.year
+    df["_partition_month"] = df["timestamp_utc"].dt.strftime("%m")
+    df["_partition_day"] = df["timestamp_utc"].dt.strftime("%d")
 
-    for (y, m, d), group_df in df.groupby(["year", "month", "day"], sort=True):
+    for (y, m, d), group_df in df.groupby(["_partition_year", "_partition_month", "_partition_day"], sort=True):
         out_dir = Path(base_dir) / source / f"year={y}" / f"month={m}" / f"day={d}"
         out_dir.mkdir(parents=True, exist_ok=True)
 
         out_path = out_dir / f"part-{run_id}.csv"
-        group_df.drop(columns=["year", "month", "day"]).to_csv(out_path, index=False)
+        group_df.drop(columns=["_partition_year", "_partition_month", "_partition_day"]).to_csv(out_path, index=False)
 
 
 def save_partitioned_parquet(
@@ -66,13 +66,13 @@ def save_partitioned_parquet(
 
     df = df.copy()
 
-    df["year"] = df["timestamp_utc"].dt.year
-    df["month"] = df["timestamp_utc"].dt.strftime("%m")
-    df["day"] = df["timestamp_utc"].dt.strftime("%d")
+    df["_partition_year"] = df["timestamp_utc"].dt.year
+    df["_partition_month"] = df["timestamp_utc"].dt.strftime("%m")
+    df["_partition_day"] = df["timestamp_utc"].dt.strftime("%d")
 
-    for (y, m, d), group_df in df.groupby(["year", "month", "day"], sort=True):
+    for (y, m, d), group_df in df.groupby(["_partition_year", "_partition_month", "_partition_day"], sort=True):
         out_dir = Path(base_dir) / source / f"year={y}" / f"month={m}" / f"day={d}"
         out_dir.mkdir(parents=True, exist_ok=True)
 
         out_path = out_dir / f"part-{run_id}.parquet"
-        group_df.drop(columns=["year", "month", "day"]).to_parquet(out_path, index=False)
+        group_df.drop(columns=["_partition_year", "_partition_month", "_partition_day"]).to_parquet(out_path, index=False)
