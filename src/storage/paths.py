@@ -11,3 +11,5 @@ RAW_WEATHER_DIR = RAW_DIR / "weather_data"
 
 PROCESSED_EIA_DIR = PROCESSED_DIR / "eia_region_data"
 PROCESSED_WEATHER_DIR = PROCESSED_DIR / "weather_data"
+
+LOGS_DIR = PROJECT_ROOT / "logs"

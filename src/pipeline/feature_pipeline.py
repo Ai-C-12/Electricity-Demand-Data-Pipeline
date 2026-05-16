@@ -4,7 +4,7 @@ from src.transform.merge_features import merge_df
 from src.pipeline.eia_pipeline import run_eia_pipeline
 from src.pipeline.weather_pipeline import run_weather_pipeline
 from src.storage.write_raw import make_run_id, save_partitioned_csv, save_partitioned_parquet
-from src.storage.paths import PROCESSED_DIR
+from src.storage.paths import PROCESSED_DIR, LOGS_DIR
 from src.validation.checks import (
     check_not_empty,
     check_required_columns,
@@ -15,6 +15,7 @@ from src.validation.checks import (
     check_duplicate_timestamps_region,
 )
 from src.utils.logger import get_logger
+from src.utils.run_summary import write_run_summary
 from src.config import FEATURE_SOURCE
 
 logger = get_logger("src.pipeline.feature_pipeline")
@@ -62,6 +63,16 @@ def run_feature_pipeline() -> pd.DataFrame:
         run_id = run_id,
     )
     logger.info(f"Saved merged feature dataset into Parquet. Run ID: {run_id}")
+
+    write_run_summary(
+        base_dir = LOGS_DIR,
+        source = FEATURE_SOURCE,
+        run_id = run_id,
+        df = merged_df,
+        output_formats = ["csv", "parquet"],
+        validation_status = "passed",
+    )
+    logger.info(f"Wrote run summary. Run ID: {run_id}")
 
     logger.info(f"Feature pipeline completed: {len(merged_df)} rows & {len(merged_df.columns)} columns. Run ID: {run_id}")
 

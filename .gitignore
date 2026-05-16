@@ -37,3 +37,4 @@ data/processed/**
 # Logs
 logs/**
 !logs/.gitkeep
+!logs/**/.gitkeep
