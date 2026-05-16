@@ -16,6 +16,7 @@ venv/
 __pycache__/
 *.pyc
 .cache.sqlite
+.pytest_cache/
 
 # VS Code local settings
 .vscode/

@@ -1,5 +1,5 @@
 # Electricity Demand Data Pipeline
-
+![Tests](https://github.com/<your-username>/<your-repo>/actions/workflows/tests.yml/badge.svg)
 A Python data engineering pipeline that ingests hourly electricity demand data from the EIA API and hourly weather data from Open-Meteo, stores raw API responses, transforms the data into processed datasets, validates schemas, and creates an analytics-ready demand-weather feature table.
 
 ## Project Status
@@ -17,11 +17,13 @@ Current capabilities:
 - Save a partitioned analytics-ready feature dataset in both CSV and Parquet format
 - Supports paginated EIA ingestion beyond the 5,000-row API response limit
 - Write per-run JSON summaries for EIA, weather, and merged feature outputs
+- Test core pipeline logic with pytest
+- Run automated tests on GitHub Actions for every push and pull request
 
 Future planned work:
 
-- Add lightweight automated tests for transforms, validation checks, and storage helpers
-- Add larger historical date ranges
+- Test larger historical date ranges
+- Add richer run summaries and merge-retention checks
 - Add Prefect orchestration
 - Add PostgreSQL or cloud storage
 - Build dashboard or ML forecasting layer
@@ -69,6 +71,10 @@ Processed EIA Data + Processed Weather Data
 ## Project Structure
 <pre>
 Electricity-Demand-Data-Pipeline/
+├─ .github/
+│  └─ workflows/
+│     └─ tests.yml
+│
 ├─ data/
 │  ├─ raw/
 │  │  ├─ eia_region_data/
@@ -110,11 +116,14 @@ Electricity-Demand-Data-Pipeline/
 │     └─ feature_pipeline.py
 │
 ├─ tests/
+│  ├─ __init__.py
 │  ├─ test_eia_transform.py
 │  ├─ test_weather_transform.py
 │  ├─ test_merge_features.py
 │  ├─ test_validation_checks.py
-│  └─ test_run_summary.py
+│  ├─ test_run_summary.py
+│  ├─ test_storage_writers.py
+│  └─ test_raw_storage.py
 │
 ├─ README.md
 ├─ requirements.txt
@@ -200,6 +209,23 @@ Checks whether temperature_2m is numeric.
 ### check_duplicate_timestamps_region
 Checks whether duplicate timestamp-region pairs exist in the merged feature dataset.
 
+## Testing
+The project includes a lightweight pytest suite for the core local logic. These tests avoid live API calls and use small in-memory DataFrames or temporary folders.
+
+Current tests cover:
+- EIA transform behavior
+- Weather transform behavior
+- Demand-weather merge logic
+- Validation checks
+- Run summary JSON writing
+- Raw storage JSON writing
+- Partitioned CSV and Parquet writers
+
+Run tests locally:
+```bash
+pytest
+```
+
 ## Setup
 ### 1. Clone the Repository
 ```
@@ -256,8 +282,8 @@ The feature pipeline runs the EIA pipeline, runs the weather pipeline, merges th
 The current dataset covers one year of hourly data, producing approximately 8,760 merged feature rows for the NYIS region.
 
 ## Next Steps
-1. Add lightweight automated tests for transforms, validation checks, and storage helpers
-2. Test larger historical ranges
+1. Test a larger historical range, such as 2 years
+2. Add richer run summaries and merge-retention checks
 3. Add Prefect orchestration
 4. Add PostgreSQL or cloud storage
 5. Build dashboard or forecasting-ready ML workflow
