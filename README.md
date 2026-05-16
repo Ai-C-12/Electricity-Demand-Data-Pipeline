@@ -1,4 +1,4 @@
-# Electricity Demand Data Pipeline ![Tests](https://github.com/<your-username>/<your-repo>/actions/workflows/tests.yml/badge.svg)
+# Electricity Demand Data Pipeline ![Tests](https://github.com/Ai-C-12/Electricity-Demand-Data-Pipeline/actions/workflows/tests.yml/badge.svg)
 A Python data engineering pipeline that ingests hourly electricity demand data from the EIA API and hourly weather data from Open-Meteo, stores raw API responses, transforms the data into processed datasets, validates schemas, and creates an analytics-ready demand-weather feature table.
 
 ## Project Status
