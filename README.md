@@ -109,10 +109,17 @@ Electricity-Demand-Data-Pipeline/
 │     ├─ full_pipeline.py
 │     └─ feature_pipeline.py
 │
-├─ .env.example
-├─ .gitignore
+├─ tests/
+│  ├─ test_eia_transform.py
+│  ├─ test_weather_transform.py
+│  ├─ test_merge_features.py
+│  ├─ test_validation_checks.py
+│  └─ test_run_summary.py
+│
+├─ README.md
 ├─ requirements.txt
-└─ README.md
+├─ .gitignore
+└─ .env.example
 </pre>
 
 ## Output Datasets
