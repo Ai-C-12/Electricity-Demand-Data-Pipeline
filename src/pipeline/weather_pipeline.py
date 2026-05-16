@@ -3,7 +3,7 @@ import pandas as pd
 from src.ingest.weather_client import fetch_weather_data
 from src.transform.weather_transform import transform_weather_data
 from src.storage.write_raw import make_run_id, save_raw_per_run, save_partitioned_csv
-from src.storage.paths import RAW_DIR, PROCESSED_DIR
+from src.storage.paths import RAW_DIR, PROCESSED_DIR, LOGS_DIR
 from src.validation.checks import (
     check_not_empty,
     check_required_columns,
@@ -12,6 +12,7 @@ from src.validation.checks import (
     check_temperature_values,
 )
 from src.utils.logger import get_logger
+from src.utils.run_summary import write_run_summary
 from src.config import (
     WEATHER_LATITUDE,
     WEATHER_LONGITUDE,
@@ -67,6 +68,16 @@ def run_weather_pipeline() -> pd.DataFrame:
         run_id = run_id,
     )
     logger.info(f"Saved processed weather data. Run ID: {run_id}")
+
+    write_run_summary(
+        base_dir = LOGS_DIR,
+        source = WEATHER_SOURCE,
+        run_id = run_id,
+        df = clean_df,
+        output_formats = ["csv"],
+        validation_status = "passed",
+    )
+    logger.info(f"Wrote run summary. Run ID: {run_id}")
 
     logger.info(f"Weather pipeline completed. Run ID: {run_id}")
     logger.info(f"Processed weather shape: {clean_df.shape}")
