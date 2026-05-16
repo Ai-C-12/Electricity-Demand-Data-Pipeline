@@ -14,11 +14,12 @@ Current capabilities:
 - Transform raw API data into cleaned processed datasets
 - Validate processed datasets before saving
 - Merge electricity demand and weather data by timestamp
-- Save a partitioned analytics-ready feature dataset
+- Save a partitioned analytics-ready feature dataset in both CSV and Parquet format
 - Supports paginated EIA ingestion beyond the 5,000-row API response limit
 
 Future planned work:
 
+- Add Parquet output support
 - Improve logging with per-run summaries, log rotation, and optional run reports
 - Add larger historical date ranges
 - Add Parquet output support
@@ -55,7 +56,7 @@ Current development configuration:
 
 ## Pipeline Architecture
 
-```
+<pre>
 EIA API -----------\
                    \
                     → Ingest → Raw Storage → Transform → Validate → Processed Data
@@ -64,7 +65,7 @@ Open-Meteo API ----/
 
 Processed EIA Data + Processed Weather Data
                     → Merge → Validate → Feature Dataset
-```
+</pre>
 
 ## Project Structure
 <pre>
@@ -128,12 +129,18 @@ Processed data is saved as partitioned CSV files by date.
 
 Example:
 ```
-data/processed/eia_region_data/year=2026/month=01/day=01/part-<run_id>.csv
-data/processed/weather_data/year=2026/month=01/day=01/part-<run_id>.csv
+data/processed/eia_region_data/year=2025/month=01/day=01/part-<run_id>.csv
+data/processed/weather_data/year=2025/month=01/day=01/part-<run_id>.csv
 ```
 
 ### Feature Dataset
-The final merged feature dataset is saved under data/processed/demand_weather_features/
+The feature pipeline currently writes the merged dataset in both CSV and Parquet format.
+
+Example:
+```
+data/processed/demand_weather_features/year=2025/month=01/day=01/part-<run_id>.csv
+data/processed/demand_weather_features/year=2025/month=01/day=01/part-<run_id>.parquet
+```
 
 Current feature columns:
 - timestamp_utc
@@ -143,6 +150,8 @@ Current feature columns:
 - hour
 - day_of_week
 - month
+
+CSV output is kept for readability during development. Parquet output is added for more production-style analytics storage because it preserves schema better and is commonly used in data engineering workflows.
 
 ## Validation
 The pipeline validates data before saving processed outputs.
