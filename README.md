@@ -37,7 +37,7 @@ Current development configuration:
 - Respondent: `NYIS`
 - Data type: `D` demand
 - Frequency: hourly
-- Current development range: January 1, 2026 to December 31, 2026
+- Current development range: January 1, 2025 to December 31, 2025
 
 #### EIA Pagination
 The EIA API response is limited to 5,000 rows per request, so the EIA ingestion client supports pagination using offset-based requests. Each page is collected into a combined DataFrame, while request metadata records the offset, page size, and number of rows returned for each page.

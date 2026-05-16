@@ -1,9 +1,10 @@
-import os
 import requests
 import pandas as pd
+from src.config import get_eia_api_key
 
 
 BASE_URL = "https://api.eia.gov/v2/electricity/rto/region-data/data/"
+api_key = get_eia_api_key()
 
 
 def fetch_eia_data(
@@ -13,7 +14,6 @@ def fetch_eia_data(
     end: str,
     length: int = 5000,
 ) -> tuple[pd.DataFrame, dict, dict]:
-    api_key = os.environ["EIA_API_KEY"]
 
     all_rows = []
     page_payload = []

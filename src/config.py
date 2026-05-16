@@ -1,3 +1,8 @@
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
 # EIA data parameters
 DEFAULT_RESPONDENT = "NYIS"
 DEFAULT_EIA_TYPE = "D"
@@ -15,3 +20,12 @@ WEATHER_HOURLY_VARIABLE = "temperature_2m"
 EIA_SOURCE = "eia_region_data"
 WEATHER_SOURCE = "weather_data"
 FEATURE_SOURCE = "demand_weather_features"
+
+# Load environment for API key
+def get_eia_api_key() -> str:
+    api_key = os.environ.get("EIA_API_KEY")
+
+    if not api_key:
+        raise ValueError("Missing EIA_API_KEY. Set it in your environment or .env file.")
+    
+    return api_key
