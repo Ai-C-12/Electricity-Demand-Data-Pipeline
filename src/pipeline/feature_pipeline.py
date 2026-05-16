@@ -3,7 +3,7 @@ import pandas as pd
 from src.transform.merge_features import merge_df
 from src.pipeline.eia_pipeline import run_eia_pipeline
 from src.pipeline.weather_pipeline import run_weather_pipeline
-from src.storage.write_raw import make_run_id, save_partitioned_csv
+from src.storage.write_raw import make_run_id, save_partitioned_csv, save_partitioned_parquet
 from src.storage.paths import PROCESSED_DIR
 from src.validation.checks import (
     check_not_empty,
@@ -53,7 +53,15 @@ def run_feature_pipeline() -> pd.DataFrame:
         df = merged_df,
         run_id = run_id,
     )
-    logger.info(f"Saved merged feature dataset. Run ID: {run_id}")
+    logger.info(f"Saved merged feature dataset into CSV. Run ID: {run_id}")
+
+    save_partitioned_parquet(
+        base_dir = PROCESSED_DIR,
+        source= FEATURE_SOURCE,
+        df = merged_df,
+        run_id = run_id,
+    )
+    logger.info(f"Saved merged feature dataset into Parquet. Run ID: {run_id}")
 
     logger.info(f"Feature pipeline completed: {len(merged_df)} rows & {len(merged_df.columns)} columns. Run ID: {run_id}")
 

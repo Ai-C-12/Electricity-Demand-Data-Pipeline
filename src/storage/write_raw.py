@@ -50,3 +50,29 @@ def save_partitioned_csv(
 
         out_path = out_dir / f"part-{run_id}.csv"
         group_df.drop(columns=["year", "month", "day"]).to_csv(out_path, index=False)
+
+
+def save_partitioned_parquet(
+    base_dir: str,
+    source: str,
+    df: pd.DataFrame,
+    run_id: str
+) -> None:
+    if "timestamp_utc" not in df.columns:
+        raise ValueError("DataFrame must contain a 'timestamp_utc' column.")
+
+    if not pd.api.types.is_datetime64_any_dtype(df["timestamp_utc"]):
+        raise TypeError("'timestamp_utc' must be a datetime column.")
+
+    df = df.copy()
+
+    df["year"] = df["timestamp_utc"].dt.year
+    df["month"] = df["timestamp_utc"].dt.strftime("%m")
+    df["day"] = df["timestamp_utc"].dt.strftime("%d")
+
+    for (y, m, d), group_df in df.groupby(["year", "month", "day"], sort=True):
+        out_dir = Path(base_dir) / source / f"year={y}" / f"month={m}" / f"day={d}"
+        out_dir.mkdir(parents=True, exist_ok=True)
+
+        out_path = out_dir / f"part-{run_id}.parquet"
+        group_df.drop(columns=["year", "month", "day"]).to_parquet(out_path, index=False)
