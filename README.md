@@ -19,7 +19,7 @@ Current capabilities:
 
 Future planned work:
 
-- Add stronger logging
+- Improve logging with per-run summaries, log rotation, and optional run reports
 - Add larger historical date ranges
 - Add Parquet output support
 - Add orchestration with Prefect
