@@ -22,11 +22,10 @@ Current capabilities:
 
 Future planned work:
 
-- Add output paths and pipeline duration to run summaries
-- Test a larger historical range, such as 3 years
-- Add lightweight Prefect orchestration
-- Add PostgreSQL or cloud storage
-- Build dashboard or ML forecasting layer
+- Split the initial Prefect wrapper into more granular tasks
+- Add PostgreSQL storage for analytics-ready tables
+- Add cloud storage for raw/processed pipeline artifacts
+- Add a dashboard or ML forecasting layer
 
 ## Data Sources
 
@@ -85,35 +84,51 @@ Electricity-Demand-Data-Pipeline/
 │     └─ demand_weather_features/
 │
 ├─ logs/
-│  └─ run_summaries
-│     └─ .gitkeep
+│  └─ run_summaries/
+│     ├─ demand_weather_features/
+│     ├─ eia_region_data/
+│     └─ weather_data/
 │
 ├─ src/
 │  ├─ ingest/
+│  │  ├─ __init__.py
 │  │  ├─ eia_client.py
 │  │  └─ weather_client.py
 │  │
+│  ├─ orchestration/
+│  │  ├─ __init__.py
+│  │  └─ flows.py
+│  │
+│  ├─ pipeline/
+│  │  ├─ __init__.py
+│  │  ├─ eia_pipeline.py
+│  │  ├─ weather_pipeline.py
+│  │  ├─ full_pipeline.py
+│  │  └─ feature_pipeline.py
+│  │
+│  ├─ storage/
+│  │  ├─ __init__.py
+│  │  ├─ paths.py
+│  │  └─ write_raw.py
+│  │
 │  ├─ transform/
+│  │  ├─ __init__.py
 │  │  ├─ eia_transform.py
 │  │  ├─ weather_transform.py
 │  │  └─ merge_features.py
 │  │
 │  ├─ utils/
+│  │  ├─ __init__.py
 │  │  ├─ logger.py
 │  │  └─ run_summary.py
 │  │
-│  ├─ storage/
-│  │  ├─ paths.py
-│  │  └─ write_raw.py
-│  │
 │  ├─ validation/
+│  │  ├─ __init__.py
 │  │  └─ checks.py
 │  │
-│  └─ pipeline/
-│     ├─ eia_pipeline.py
-│     ├─ weather_pipeline.py
-│     ├─ full_pipeline.py
-│     └─ feature_pipeline.py
+│  ├─ __init__.py
+│  ├─ cli.py
+│  └─ config.py
 │
 ├─ tests/
 │  ├─ __init__.py
@@ -180,7 +195,7 @@ CSV output is kept for readability during development. Parquet output is added f
 
 Each pipeline run writes a JSON summary containing row counts, column counts, timestamp range, output formats, validation status, and generation time.
 
-For the merged feature dataset, the run summary also includes merge-quality metadata such as source row counts, merged row count, expected merge rows, merge retention rate, merge retention status, and timestamp coverage status.
+For the merged feature dataset, the run summary also includes merge-quality metadata such as source row counts, merged row count, expected merge rows, merge retention rate, merge retention status, timestamp coverage status, pipeline duration, and compact output metadata with partition counts.
 
 Examples:
 ```text
@@ -236,6 +251,17 @@ Run tests locally:
 pytest
 ```
 
+## Orchestration
+
+The project includes an initial Prefect flow wrapper for the end-to-end feature pipeline.
+
+Run the Prefect flow locally:
+```bash
+python -m src.orchestration.flows
+```
+
+The current Prefect flow wraps the existing feature pipeline as one tracked flow/task. This confirms the pipeline can be orchestrated and monitored through Prefect. A future improvement is to split the flow into smaller tasks for EIA ingestion, weather ingestion, feature generation, validation, output writing, and run summary generation.
+
 ## Setup
 ### 1. Clone the Repository
 ```
@@ -286,14 +312,18 @@ Run full feature pipeline:
 ```
 python -m src.pipeline.feature_pipeline
 ```
+Run Prefect-orchestrated feature pipeline:
+```bash
+python -m src.orchestration.flows
+```
+
 The feature pipeline runs the EIA pipeline, runs the weather pipeline, merges the processed outputs, validates the merged dataset, checks merge retention and hourly timestamp coverage, saves the final feature table as both CSV and Parquet, and writes JSON run summaries for the source and feature datasets.
 
 ## Current Development Range
 The current dataset covers one year of hourly data, producing approximately 8,760 merged feature rows for the NYIS region.
 
 ## Next Steps
-1. Add output paths and pipeline duration to run summaries
-2. Test a larger historical range, such as 3 years
-3. Add lightweight Prefect orchestration
-4. Add PostgreSQL or cloud storage
-5. Build dashboard or forecasting-ready ML workflow
+1. Split the Prefect wrapper into more granular pipeline tasks
+2. Add PostgreSQL storage for the final analytics-ready feature dataset
+3. Add cloud storage for raw and processed artifacts
+4. Build a dashboard or forecasting-ready ML workflow
