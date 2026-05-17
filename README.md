@@ -19,14 +19,15 @@ Current capabilities:
 - Test core pipeline logic with pytest
 - Run automated tests on GitHub Actions for every push and pull request
 - Validate merge retention and continuous hourly timestamp coverage
-- Run the end-to-end feature pipeline through an initial Prefect orchestration wrapper
+- Run the feature pipeline through a granular Prefect flow with separate EIA, weather, and feature-building tasks
+- Optionally load the final demand-weather feature dataset into PostgreSQL using an upsert on region and timestamp
 
 Future planned work:
 
-- Split the initial Prefect wrapper into more granular tasks
-- Add PostgreSQL storage for analytics-ready tables
-- Add cloud storage for raw/processed pipeline artifacts
-- Add a dashboard or ML forecasting layer
+- Add cloud storage for raw and processed pipeline artifacts
+- Add a dashboard or analytics layer on top of the PostgreSQL/Parquet feature dataset
+- Add a forecasting-ready ML workflow
+- Add stronger production deployment options such as Docker or scheduled Prefect deployments
 
 ## Data Sources
 
@@ -90,6 +91,13 @@ Electricity-Demand-Data-Pipeline/
 │     ├─ eia_region_data/
 │     └─ weather_data/
 │
+├─ scripts/
+│  ├─ __init__.py
+│  └─ manual_postgres_writer_check.py
+│
+├─ sql/
+│  └─ demand_weather_features.sql
+│
 ├─ src/
 │  ├─ ingest/
 │  │  ├─ __init__.py
@@ -110,6 +118,7 @@ Electricity-Demand-Data-Pipeline/
 │  ├─ storage/
 │  │  ├─ __init__.py
 │  │  ├─ paths.py
+│  │  ├─ postgres_writer.py
 │  │  └─ write_raw.py
 │  │
 │  ├─ transform/
@@ -205,6 +214,26 @@ logs/run_summaries/weather_data/<run_id>.json
 logs/run_summaries/demand_weather_features/<run_id>.json
 ```
 
+### PostgreSQL Output
+
+The project also supports an optional PostgreSQL load for the final `demand_weather_features` table.
+
+The PostgreSQL table schema is defined in:
+
+```text
+sql/demand_weather_features.sql
+```
+
+The feature dataset can be loaded into PostgreSQL with an upsert strategy using (region, timestamp_utc) as the primary key. This allows rerunning the pipeline without creating duplicate hourly records.
+
+PostgreSQL loading is controlled by environment variables:
+```env
+DATABASE_URL=postgresql+psycopg2://username:password@localhost:5432/electricity_pipeline
+ENABLE_POSTGRES_LOAD=false
+```
+
+When ENABLE_POSTGRES_LOAD=true, the feature pipeline creates the table if needed and upserts the merged feature dataset into PostgreSQL.
+
 ## Validation
 The pipeline validates data before saving processed outputs.
 
@@ -261,7 +290,7 @@ Run the Prefect flow locally:
 python -m src.orchestration.flows
 ```
 
-The current Prefect flow wraps the existing feature pipeline as one tracked flow/task. This confirms the pipeline can be orchestrated and monitored through Prefect. A future improvement is to split the flow into smaller tasks for EIA ingestion, weather ingestion, feature generation, validation, output writing, and run summary generation.
+The current Prefect flow is split into separate tasks for EIA ingestion, weather ingestion, and feature dataset building. This gives Prefect more useful visibility into each stage of the pipeline.
 
 ## Setup
 ### 1. Clone the Repository
@@ -294,7 +323,12 @@ Create a local .env file or set the variable in your shell. Do not commit real A
 Required variable:
 ```
 EIA_API_KEY=your_eia_api_key_here
+
+DATABASE_URL=postgresql+psycopg2://username:password@localhost:5432/electricity_pipeline
+ENABLE_POSTGRES_LOAD=false
 ```
+
+Set ENABLE_POSTGRES_LOAD=true only when a local PostgreSQL database is running and you want the feature pipeline to load the final dataset into Postgres.
 
 ## Running the Pipeline
 Run EIA pipeline:
@@ -318,13 +352,14 @@ Run Prefect-orchestrated feature pipeline:
 python -m src.orchestration.flows
 ```
 
-The feature pipeline runs the EIA pipeline, runs the weather pipeline, merges the processed outputs, validates the merged dataset, checks merge retention and hourly timestamp coverage, saves the final feature table as both CSV and Parquet, and writes JSON run summaries for the source and feature datasets.
+The feature pipeline runs the EIA pipeline, runs the weather pipeline, merges the processed outputs, validates the merged dataset, checks merge retention and hourly timestamp coverage, saves the final feature table as both CSV and Parquet, optionally upserts the final feature table into PostgreSQL, and writes JSON run summaries for the source and feature datasets.
 
 ## Current Development Range
 The current dataset covers one year of hourly data, producing approximately 8,760 merged feature rows for the NYIS region.
 
 ## Next Steps
-1. Split the Prefect wrapper into more granular pipeline tasks
-2. Add PostgreSQL storage for the final analytics-ready feature dataset
-3. Add cloud storage for raw and processed artifacts
-4. Build a dashboard or forecasting-ready ML workflow
+1. Update documentation and handoff notes for the PostgreSQL milestone
+2. Add cloud storage for raw and processed artifacts
+3. Build a dashboard or analytics layer using the Parquet/PostgreSQL feature dataset
+4. Add a forecasting-ready ML workflow
+5. Add production deployment polish such as Docker or scheduled Prefect deployments
