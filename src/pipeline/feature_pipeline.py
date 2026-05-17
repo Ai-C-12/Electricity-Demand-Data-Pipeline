@@ -46,7 +46,7 @@ def run_feature_pipeline() -> pd.DataFrame:
     check_demand_values(merged_df, dataset_name)
     check_temperature_values(merged_df, dataset_name)
     check_duplicate_timestamps_region(merged_df, dataset_name)
-    check_merge_retention(demand_df, weather_df, merged_df, dataset_name)
+    check_merge_retention(merged_df, demand_df, weather_df, dataset_name)
     check_hourly_timestamp_coverage(merged_df, dataset_name)
     logger.info(f"Validated merged feature dataset")
 
