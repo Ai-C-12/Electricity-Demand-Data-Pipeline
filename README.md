@@ -15,16 +15,16 @@ Current capabilities:
 - Merge electricity demand and weather data by timestamp
 - Save a partitioned analytics-ready feature dataset in both CSV and Parquet format
 - Supports paginated EIA ingestion beyond the 5,000-row API response limit
-- Write per-run JSON summaries for EIA, weather, and merged feature outputs
+- Write per-run JSON summaries for EIA, weather, and merged feature outputs, including merge-quality metadata for the feature dataset
 - Test core pipeline logic with pytest
 - Run automated tests on GitHub Actions for every push and pull request
 - Validate merge retention and continuous hourly timestamp coverage
 
 Future planned work:
 
-- Test larger historical date ranges
-- Add richer run summaries and merge-retention checks
-- Add Prefect orchestration
+- Add output paths and pipeline duration to run summaries
+- Test a larger historical range, such as 3 years
+- Add lightweight Prefect orchestration
 - Add PostgreSQL or cloud storage
 - Build dashboard or ML forecasting layer
 
@@ -180,10 +180,14 @@ CSV output is kept for readability during development. Parquet output is added f
 
 Each pipeline run writes a JSON summary containing row counts, column counts, timestamp range, output formats, validation status, and generation time.
 
+For the merged feature dataset, the run summary also includes merge-quality metadata such as source row counts, merged row count, expected merge rows, merge retention rate, merge retention status, and timestamp coverage status.
+
 Examples:
+```text
 logs/run_summaries/eia_region_data/<run_id>.json
 logs/run_summaries/weather_data/<run_id>.json
 logs/run_summaries/demand_weather_features/<run_id>.json
+```
 
 ## Validation
 The pipeline validates data before saving processed outputs.
@@ -223,7 +227,7 @@ Current tests cover:
 - Weather transform behavior
 - Demand-weather merge logic
 - Validation checks
-- Run summary JSON writing
+- Run summary JSON writing, including optional extra metadata
 - Raw storage JSON writing
 - Partitioned CSV and Parquet writers
 
@@ -282,14 +286,14 @@ Run full feature pipeline:
 ```
 python -m src.pipeline.feature_pipeline
 ```
-The feature pipeline runs the EIA pipeline, runs the weather pipeline, merges the processed outputs, validates the merged dataset, saves the final feature table as both CSV and Parquet, and writes JSON run summaries for the source and feature datasets.
+The feature pipeline runs the EIA pipeline, runs the weather pipeline, merges the processed outputs, validates the merged dataset, checks merge retention and hourly timestamp coverage, saves the final feature table as both CSV and Parquet, and writes JSON run summaries for the source and feature datasets.
 
 ## Current Development Range
 The current dataset covers one year of hourly data, producing approximately 8,760 merged feature rows for the NYIS region.
 
 ## Next Steps
-1. Test a larger historical range, such as 2 years
-2. Add richer run summaries and merge-retention checks
-3. Add Prefect orchestration
+1. Add output paths and pipeline duration to run summaries
+2. Test a larger historical range, such as 3 years
+3. Add lightweight Prefect orchestration
 4. Add PostgreSQL or cloud storage
 5. Build dashboard or forecasting-ready ML workflow
