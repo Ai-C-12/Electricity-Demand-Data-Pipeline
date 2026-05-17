@@ -7,3 +7,5 @@ python-dotenv
 pyarrow
 pytest
 prefect
+sqlalchemy
+psycopg2-binary
