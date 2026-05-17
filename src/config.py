@@ -29,3 +29,7 @@ def get_eia_api_key() -> str:
         raise ValueError("Missing EIA_API_KEY. Set it in your environment or .env file.")
     
     return api_key
+
+# Load Database URL
+DATABASE_URL = os.getenv("DATABASE_URL")
+ENABLE_POSTGRES_LOAD = os.getenv("ENABLE_POSTGRES_LOAD", "false").lower() == "true"

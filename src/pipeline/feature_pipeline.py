@@ -19,7 +19,8 @@ from src.validation.checks import (
 )
 from src.utils.logger import get_logger
 from src.utils.run_summary import write_run_summary
-from src.config import FEATURE_SOURCE
+from src.config import FEATURE_SOURCE, DATABASE_URL, ENABLE_POSTGRES_LOAD
+from src.storage.postgres_writer import create_postgres_tables, write_to_postgres
 
 
 logger = get_logger("src.pipeline.feature_pipeline")
@@ -31,9 +32,9 @@ def build_feature_dataset(
     logger.info("Starting feature dataset build")
     start_time = perf_counter()
 
-    dataset_name = "Merged feature dataset"
-
     run_id = make_run_id()
+
+    dataset_name = "Merged feature dataset"
 
     # Merge demand and weather data
     merged_df = merge_df(demand_df, weather_df)
@@ -79,6 +80,25 @@ def build_feature_dataset(
     )
     logger.info(f"Saved {len(parquet_output_paths)} Parquet feature partitions. Run ID: {run_id}")
 
+    postgres_loaded = False
+
+    if ENABLE_POSTGRES_LOAD:
+        if not DATABASE_URL:
+            raise ValueError("ENABLE_POSTGRES_LOAD is true, but DATABASE_URL is not set.")
+        
+        create_postgres_tables(DATABASE_URL)
+
+        write_to_postgres(
+            df = merged_df,
+            database_url = DATABASE_URL,
+            run_id = run_id,
+        )
+
+        postgres_loaded = True
+        logger.info(f"Loaded feature dataset into PostgreSQL. Run ID: {run_id}")
+    else:
+        logger.info("Skipping PostgreSQL load because ENABLE_POSTGRES_LOAD is false")
+
     pipeline_duration_seconds = round(perf_counter() - start_time, 2)
 
     expected_rows = min(len(demand_df), len(weather_df))
@@ -109,6 +129,8 @@ def build_feature_dataset(
                 "partitioning": ["year", "month", "day"],
             },
         },
+        "postgres_loaded": postgres_loaded,
+        "postgres_table": "demand_weather_features" if postgres_loaded else None,
     }
 
     write_run_summary(
