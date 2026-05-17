@@ -13,6 +13,8 @@ from src.validation.checks import (
     check_demand_values,
     check_temperature_values,
     check_duplicate_timestamps_region,
+    check_merge_retention, 
+    check_hourly_timestamp_coverage,
 )
 from src.utils.logger import get_logger
 from src.utils.run_summary import write_run_summary
@@ -44,6 +46,8 @@ def run_feature_pipeline() -> pd.DataFrame:
     check_demand_values(merged_df, dataset_name)
     check_temperature_values(merged_df, dataset_name)
     check_duplicate_timestamps_region(merged_df, dataset_name)
+    check_merge_retention(demand_df, weather_df, merged_df, dataset_name)
+    check_hourly_timestamp_coverage(merged_df, dataset_name)
     logger.info(f"Validated merged feature dataset")
 
     run_id = make_run_id()

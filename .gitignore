@@ -35,7 +35,10 @@ data/processed/**
 !data/processed/**/
 !data/processed/**/.gitkeep
 
-# Logs
+# Ignore generated logs and run summaries
 logs/**
-!logs/.gitkeep
+
+# But keep log folders and .gitkeep files
+!logs/
+!logs/**/
 !logs/**/.gitkeep

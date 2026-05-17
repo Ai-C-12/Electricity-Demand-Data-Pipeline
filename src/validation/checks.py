@@ -1,4 +1,5 @@
 import pandas as pd
+from src.config import EIA_START, EIA_END
 
 def check_not_empty(df: pd.DataFrame, dataset_name: str) -> None:
     if df.empty:
@@ -38,3 +39,56 @@ def check_temperature_values(df: pd.DataFrame, dataset_name: str) -> None:
 def check_duplicate_timestamps_region(df: pd.DataFrame, dataset_name: str) -> None:
     if df.duplicated(subset=["timestamp_utc", "region"]).any():
         raise ValueError(f"{dataset_name} contains duplicate timestamp-region pairs.")
+    
+
+def check_merge_retention(
+    merged_df: pd.DataFrame,
+    demand_df: pd.DataFrame,
+    weather_df: pd.DataFrame,
+    dataset_name: str,
+    min_retention: float = 0.99,
+) -> None:
+    expected_rows = min(len(demand_df), len(weather_df))
+
+    if expected_rows == 0:
+        raise ValueError("One of the datasets is empty, cannot perform merge retention check.")
+    
+    retention_rate = len(merged_df) / expected_rows
+
+    if retention_rate < min_retention:
+        raise ValueError(
+            f"{dataset_name}: merge retention too low. "
+            f"Expected at least {min_retention:.2%}, got {retention_rate:.2%}. "
+            f"Demand rows: {len(demand_df)}, weather rows: {len(weather_df)}, merged rows: {len(merged_df)}."
+        )
+
+
+def check_hourly_timestamp_coverage(
+    df: pd.DataFrame,
+    dataset_name: str,
+    timestamp_col: str = "timestamp_utc",
+) -> None:
+    if timestamp_col not in df.columns:
+        raise ValueError(f"{dataset_name}: missing required timestamp column '{timestamp_col}'.")
+
+    if not pd.api.types.is_datetime64_any_dtype(df[timestamp_col]):
+        raise ValueError(f"{dataset_name}: '{timestamp_col}' must be a datetime column.")
+
+    timestamps = df[timestamp_col].dropna().drop_duplicates().sort_values()
+
+    if timestamps.empty:
+        raise ValueError(f"{dataset_name}: no timestamps available for coverage check.")
+
+    expected_timestamps = pd.date_range(
+        start=timestamps.min(),
+        end=timestamps.max(),
+        freq="h",
+    )
+
+    missing_timestamps = expected_timestamps.difference(pd.DatetimeIndex(timestamps))
+
+    if len(missing_timestamps) > 0:
+        raise ValueError(
+            f"{dataset_name}: missing {len(missing_timestamps)} hourly timestamps "
+            f"between {timestamps.min()} and {timestamps.max()}."
+        )
