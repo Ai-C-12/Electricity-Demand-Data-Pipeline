@@ -2,7 +2,7 @@
 A Python data engineering pipeline that ingests hourly electricity demand data from the EIA API and hourly weather data from Open-Meteo, stores raw API responses, transforms the data into processed datasets, validates schemas, and creates an analytics-ready demand-weather feature table.
 
 ## Project Status
-The default development configuration currently runs one full year of hourly data for 2025. The pipeline has also been tested successfully on a two-year 2024–2025 range, producing 17,544 merged hourly feature rows.
+The default development configuration currently runs one full year of hourly data for 2025. The pipeline has also been successfully tested on a 3-year 2023–2025 range, producing 26,304 merged hourly feature rows.
 
 Current capabilities:
 
