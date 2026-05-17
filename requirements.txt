@@ -6,3 +6,4 @@ retry-requests
 python-dotenv
 pyarrow
 pytest
+prefect
