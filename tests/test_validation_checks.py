@@ -9,6 +9,8 @@ from src.validation.checks import (
     check_demand_values,
     check_temperature_values,
     check_duplicate_timestamps_region,
+    check_merge_retention,
+    check_hourly_timestamp_coverage,
 )
 
 
@@ -108,3 +110,54 @@ def test_check_duplicate_timestamps_region_raises_on_duplicates():
 
     with pytest.raises(ValueError):
         check_duplicate_timestamps_region(df, "Test Feature Dataset")
+
+
+# Checks for high retention
+def test_check_merge_retention_when_retention_is_high():
+    demand_df = make_valid_feature_df()
+    weather_df = make_valid_feature_df()
+    merged_df = make_valid_feature_df()
+
+    check_merge_retention(
+        merged_df=merged_df,
+        demand_df=demand_df,
+        weather_df=weather_df,
+        dataset_name="Test Feature Dataset",
+    )
+
+
+# Checks for low retention
+def test_check_merge_retention_raises_when_retention_is_low():
+    demand_df = make_valid_feature_df()
+    weather_df = make_valid_feature_df()
+    merged_df = make_valid_feature_df().iloc[:1]  # Only 1 row retained
+
+    with pytest.raises(ValueError):
+        check_merge_retention(
+            merged_df=merged_df,
+            demand_df=demand_df,
+            weather_df=weather_df,
+            dataset_name="Test Feature Dataset",
+            min_retention=0.99,
+        )
+
+
+def test_check_hourly_timestamp_coverage_passes_for_continuous_hours():
+    df = make_valid_feature_df()
+
+    check_hourly_timestamp_coverage(df, "Test Feature Dataset")
+
+
+def test_check_hourly_timestamp_coverage_raises_for_missing_hours():
+    df = pd.DataFrame({
+        "timestamp_utc": pd.to_datetime([
+            "2025-01-01T00:00:00Z",
+            "2025-01-01T02:00:00Z",
+        ]),
+        "region": ["NYIS", "NYIS"],
+        "demand_mwh": [18000, 19000],
+        "temperature_2m": [2.5, 3.0],
+    })
+
+    with pytest.raises(ValueError):
+        check_hourly_timestamp_coverage(df, "Test Feature Dataset")
