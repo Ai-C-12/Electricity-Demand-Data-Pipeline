@@ -19,6 +19,7 @@ Current capabilities:
 - Test core pipeline logic with pytest
 - Run automated tests on GitHub Actions for every push and pull request
 - Validate merge retention and continuous hourly timestamp coverage
+- Run the end-to-end feature pipeline through an initial Prefect orchestration wrapper
 
 Future planned work:
 
