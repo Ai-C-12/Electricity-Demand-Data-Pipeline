@@ -1,4 +1,5 @@
 import pandas as pd
+from pathlib import Path
 
 from src.storage.write_raw import save_partitioned_csv, save_partitioned_parquet
 
@@ -24,12 +25,17 @@ def test_save_partitioned_csv(tmp_path):
     source = "demand_weather_features"
     run_id = "test_run_001"
 
-    save_partitioned_csv(
+    written_paths = save_partitioned_csv(
         base_dir = tmp_path,
         source = source,
         df = df,
         run_id = run_id,
     )
+
+    assert len(written_paths) == 2
+
+    for path in written_paths:
+        assert Path(path).exists()
 
     day_1_path = tmp_path / source / "year=2025" / "month=01" / "day=01" / f"part-{run_id}.csv"
     day_2_path = tmp_path / source / "year=2025" / "month=01" / "day=02" / f"part-{run_id}.csv"
@@ -50,12 +56,17 @@ def test_save_partitioned_parquet(tmp_path):
     source = "demand_weather_features"
     run_id = "test_run_002"
 
-    save_partitioned_parquet(
+    written_paths = save_partitioned_parquet(
         base_dir = tmp_path,
         source = source,
         df = df,
         run_id = run_id,
     )
+
+    assert len(written_paths) == 2
+
+    for path in written_paths:
+        assert Path(path).exists()
 
     day_1_path = tmp_path / source / "year=2025" / "month=01" / "day=01" / f"part-{run_id}.parquet"
     day_2_path = tmp_path / source / "year=2025" / "month=01" / "day=02" / f"part-{run_id}.parquet"

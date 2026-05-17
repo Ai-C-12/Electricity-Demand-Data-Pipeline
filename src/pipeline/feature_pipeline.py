@@ -1,4 +1,5 @@
 import pandas as pd
+from time import perf_counter
 
 from src.transform.merge_features import merge_df
 from src.pipeline.eia_pipeline import run_eia_pipeline
@@ -24,6 +25,7 @@ logger = get_logger("src.pipeline.feature_pipeline")
 
 def run_feature_pipeline() -> pd.DataFrame:
     logger.info("Starting feature pipeline")
+    start_time = perf_counter()
 
     demand_df = run_eia_pipeline()
     weather_df = run_weather_pipeline()
@@ -52,7 +54,7 @@ def run_feature_pipeline() -> pd.DataFrame:
 
     run_id = make_run_id()
 
-    save_partitioned_csv(
+    csv_output_paths = save_partitioned_csv(
         base_dir =  PROCESSED_DIR,
         source = FEATURE_SOURCE,
         df = merged_df,
@@ -60,13 +62,44 @@ def run_feature_pipeline() -> pd.DataFrame:
     )
     logger.info(f"Saved merged feature dataset into CSV. Run ID: {run_id}")
 
-    save_partitioned_parquet(
+    parquet_output_paths = save_partitioned_parquet(
         base_dir = PROCESSED_DIR,
         source= FEATURE_SOURCE,
         df = merged_df,
         run_id = run_id,
     )
     logger.info(f"Saved merged feature dataset into Parquet. Run ID: {run_id}")
+
+    expected_rows = min(len(demand_df), len(weather_df))
+    merge_retention_rate = len(merged_df) / expected_rows
+
+    output_base_path = f"data/processed/{FEATURE_SOURCE}"
+
+    pipeline_duration_seconds = round(perf_counter() - start_time, 2)
+
+    extra_metadata = {
+        "pipeline_stage": "feature_engineering",
+        "demand_row_count": len(demand_df),
+        "weather_row_count": len(weather_df),
+        "merged_row_count": len(merged_df),
+        "expected_merge_rows": expected_rows,
+        "merge_retention_rate": merge_retention_rate,
+        "merge_retention_status": "passed",
+        "timestamp_coverage_status": "passed",
+        "pipeline_duration_seconds": pipeline_duration_seconds,
+        "outputs": {
+            "csv": {
+                "file_count": len(csv_output_paths),
+                "base_path": output_base_path,
+                "partitioning": ["year", "month", "day"],
+            },
+            "parquet": {
+                "file_count": len(parquet_output_paths),
+                "base_path": output_base_path,
+                "partitioning": ["year", "month", "day"],
+            },
+        },
+    }
 
     write_run_summary(
         base_dir = LOGS_DIR,
@@ -75,15 +108,7 @@ def run_feature_pipeline() -> pd.DataFrame:
         df = merged_df,
         output_formats = ["csv", "parquet"],
         validation_status = "passed",
-        extra_metadata = {
-            "pipeline_stage": "feature_engineering",
-            "demand_row_count": len(demand_df),
-            "weather_row_count": len(weather_df),
-            "merged_row_count": len(merged_df),
-            "merge_retention_rate": len(merged_df) / min(len(demand_df), len(weather_df)),
-            "merge_retention_status": "passed",
-            "timestamp_coverage_status": "passed",
-        }
+        extra_metadata = extra_metadata,
     )
     logger.info(f"Wrote run summary. Run ID: {run_id}")
 

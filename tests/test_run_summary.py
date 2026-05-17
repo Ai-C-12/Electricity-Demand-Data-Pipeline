@@ -23,6 +23,19 @@ def test_write_run_summary(tmp_path):
         "merge_retention_rate": 1.0,
         "merge_retention_status": "passed",
         "timestamp_coverage_status": "passed",
+        "pipeline_duration_seconds": 6.69,
+        "outputs": {
+            "csv": {
+                "file_count": 2,
+                "base_path": "data/processed/demand_weather_features",
+                "partitioning": ["year", "month", "day"],
+            },
+            "parquet": {
+                "file_count": 2,
+                "base_path": "data/processed/demand_weather_features",
+                "partitioning": ["year", "month", "day"],
+            },
+        },
     }
 
     run_id = "test_run_001"
@@ -62,3 +75,11 @@ def test_write_run_summary(tmp_path):
     assert summary["merge_retention_rate"] == 1.0
     assert summary["merge_retention_status"] == "passed"
     assert summary["timestamp_coverage_status"] == "passed"
+
+    assert summary["pipeline_duration_seconds"] == 6.69
+    assert summary["outputs"]["csv"]["base_path"] == "data/processed/demand_weather_features"
+    assert summary["outputs"]["parquet"]["base_path"] == "data/processed/demand_weather_features"
+    assert summary["outputs"]["csv"]["file_count"] == 2
+    assert summary["outputs"]["parquet"]["file_count"] == 2
+    assert summary["outputs"]["csv"]["partitioning"] == ["year", "month", "day"]
+    assert summary["outputs"]["parquet"]["partitioning"] == ["year", "month", "day"]

@@ -31,12 +31,14 @@ def save_partitioned_csv(
     source: str,
     df: pd.DataFrame,
     run_id: str
-) -> None:
+) -> list[str]:
     if "timestamp_utc" not in df.columns:
         raise ValueError("DataFrame must contain a 'timestamp_utc' column.")
 
     if not pd.api.types.is_datetime64_any_dtype(df["timestamp_utc"]):
         raise TypeError("'timestamp_utc' must be a datetime column.")
+    
+    written_paths = []
 
     df = df.copy()
 
@@ -50,6 +52,9 @@ def save_partitioned_csv(
 
         out_path = out_dir / f"part-{run_id}.csv"
         group_df.drop(columns=["_partition_year", "_partition_month", "_partition_day"]).to_csv(out_path, index=False)
+        written_paths.append(str(out_path))
+    
+    return written_paths
 
 
 def save_partitioned_parquet(
@@ -57,12 +62,14 @@ def save_partitioned_parquet(
     source: str,
     df: pd.DataFrame,
     run_id: str
-) -> None:
+) -> list[str]:
     if "timestamp_utc" not in df.columns:
         raise ValueError("DataFrame must contain a 'timestamp_utc' column.")
 
     if not pd.api.types.is_datetime64_any_dtype(df["timestamp_utc"]):
         raise TypeError("'timestamp_utc' must be a datetime column.")
+    
+    written_paths = []
 
     df = df.copy()
 
@@ -76,3 +83,6 @@ def save_partitioned_parquet(
 
         out_path = out_dir / f"part-{run_id}.parquet"
         group_df.drop(columns=["_partition_year", "_partition_month", "_partition_day"]).to_parquet(out_path, index=False)
+        written_paths.append(str(out_path))
+        
+    return written_paths
