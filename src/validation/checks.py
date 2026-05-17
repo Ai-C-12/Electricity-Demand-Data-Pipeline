@@ -1,5 +1,4 @@
 import pandas as pd
-from src.config import EIA_START, EIA_END
 
 def check_not_empty(df: pd.DataFrame, dataset_name: str) -> None:
     if df.empty:
