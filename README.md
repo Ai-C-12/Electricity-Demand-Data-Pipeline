@@ -18,6 +18,7 @@ Current capabilities:
 - Write per-run JSON summaries for EIA, weather, and merged feature outputs
 - Test core pipeline logic with pytest
 - Run automated tests on GitHub Actions for every push and pull request
+- Validate merge retention and continuous hourly timestamp coverage
 
 Future planned work:
 
@@ -207,6 +208,12 @@ Checks whether temperature_2m is numeric.
 
 ### check_duplicate_timestamps_region
 Checks whether duplicate timestamp-region pairs exist in the merged feature dataset.
+
+### check_merge_retention
+Checks whether the merged feature dataset kept enough rows from the source demand/weather inputs.
+
+### check_hourly_timestamp_coverage
+Checks whether the merged feature dataset has a continuous hourly timestamp range with no missing hours.
 
 ## Testing
 The project includes a lightweight pytest suite for the core local logic. These tests avoid live API calls and use small in-memory DataFrames or temporary folders.
