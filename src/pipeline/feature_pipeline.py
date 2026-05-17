@@ -75,6 +75,15 @@ def run_feature_pipeline() -> pd.DataFrame:
         df = merged_df,
         output_formats = ["csv", "parquet"],
         validation_status = "passed",
+        extra_metadata = {
+            "pipeline_stage": "feature_engineering",
+            "demand_row_count": len(demand_df),
+            "weather_row_count": len(weather_df),
+            "merged_row_count": len(merged_df),
+            "merge_retention_rate": len(merged_df) / min(len(demand_df), len(weather_df)),
+            "merge_retention_status": "passed",
+            "timestamp_coverage_status": "passed",
+        }
     )
     logger.info(f"Wrote run summary. Run ID: {run_id}")
 

@@ -10,6 +10,7 @@ def write_run_summary(
     df: pd.DataFrame,
     output_formats: list[str],
     validation_status: str = "passed",
+    extra_metadata: dict | None = None,
 ) -> None:
     if "timestamp_utc" not in df.columns:
         raise ValueError("DataFrame must contain a 'timestamp_utc' column.")
@@ -32,5 +33,8 @@ def write_run_summary(
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
     }
 
+    if extra_metadata:
+        summary.update(extra_metadata)
+
     with open(summary_path, "w", encoding="utf-8") as f:
-        json.dump(summary, f, indent=2)
+        json.dump(summary, f, indent=2, ensure_ascii=False)

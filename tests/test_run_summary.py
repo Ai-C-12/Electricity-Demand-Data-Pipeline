@@ -14,6 +14,17 @@ def test_write_run_summary(tmp_path):
         "temperature_2m": [2.5, 3.0],
     })
 
+    extra_metadata = {
+        "pipeline_stage": "feature_engineering",
+        "demand_row_count": 2,
+        "weather_row_count": 2,
+        "merged_row_count": 2,
+        "expected_merge_rows": 2,
+        "merge_retention_rate": 1.0,
+        "merge_retention_status": "passed",
+        "timestamp_coverage_status": "passed",
+    }
+
     run_id = "test_run_001"
     source = "demand_weather_features"
 
@@ -24,6 +35,7 @@ def test_write_run_summary(tmp_path):
         df = df,
         output_formats = ["csv", "parquet"],
         validation_status = "passed",
+        extra_metadata = extra_metadata,
     )
 
     summary_path = tmp_path / "run_summaries" / source / f"{run_id}.json"
@@ -41,3 +53,12 @@ def test_write_run_summary(tmp_path):
     assert summary["validation_status"] == "passed"
     assert summary["timestamp_min"] == "2025-01-01T00:00:00+00:00"
     assert summary["timestamp_max"] == "2025-01-01T01:00:00+00:00"
+
+    assert summary["pipeline_stage"] == "feature_engineering"
+    assert summary["demand_row_count"] == 2
+    assert summary["weather_row_count"] == 2
+    assert summary["merged_row_count"] == 2
+    assert summary["expected_merge_rows"] == 2
+    assert summary["merge_retention_rate"] == 1.0
+    assert summary["merge_retention_status"] == "passed"
+    assert summary["timestamp_coverage_status"] == "passed"
