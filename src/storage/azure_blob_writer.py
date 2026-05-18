@@ -88,7 +88,9 @@ def upload_files_to_azure(
 
     uploaded_blob_names = []
 
-    logger.info(f"Uploading {len(local_paths)} files to Azure Blob Storage...")
+    if len(local_paths) > 20:
+        logger.info(f"Uploading {len(local_paths)} files to Azure Blob Storage...")
+
     for local_path in local_paths:
         local_path = Path(local_path)
 
@@ -109,6 +111,7 @@ def upload_files_to_azure(
 
         uploaded_blob_names.append(blob_name)
     
-    logger.info(f"{len(uploaded_blob_names)} files uploaded.")
+    if len(local_paths) > 20:
+        logger.info(f"{len(uploaded_blob_names)} files uploaded.")
     
     return uploaded_blob_names

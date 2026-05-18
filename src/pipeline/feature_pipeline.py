@@ -174,7 +174,7 @@ def build_feature_dataset(
         "azure_uploaded_file_count": azure_uploaded_file_count,
     }
 
-    write_run_summary(
+    summary_path = write_run_summary(
         base_dir = LOGS_DIR,
         source = FEATURE_SOURCE,
         run_id = run_id,
@@ -184,6 +184,14 @@ def build_feature_dataset(
         extra_metadata = extra_metadata,
     )
     logger.info(f"Wrote feature run summary. Run ID: {run_id}")
+
+    if ENABLE_AZURE_UPLOAD:
+        upload_files_to_azure(
+            local_paths = [summary_path],
+            connection_string = AZURE_STORAGE_CONNECTION_STRING,
+            container_name = AZURE_STORAGE_CONTAINER,
+        )
+        logger.info(f"Uploaded feature run summary to Azure Blob Storage. Run ID: {run_id}")
 
     logger.info(
         f"Feature dataset build completed in {pipeline_duration_seconds}s. "

@@ -11,7 +11,7 @@ def write_run_summary(
     output_formats: list[str],
     validation_status: str = "passed",
     extra_metadata: dict | None = None,
-) -> None:
+) -> Path:
     if "timestamp_utc" not in df.columns:
         raise ValueError("DataFrame must contain a 'timestamp_utc' column.")
 
@@ -38,3 +38,5 @@ def write_run_summary(
 
     with open(summary_path, "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2, ensure_ascii=False)
+    
+    return summary_path
