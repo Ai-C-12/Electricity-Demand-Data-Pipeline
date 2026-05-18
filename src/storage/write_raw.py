@@ -14,9 +14,12 @@ def save_raw_per_run(
     run_id: str,
     payload: dict,
     request_meta: dict
-) -> None:
+) -> list[str]:
     run_dir = Path(base_dir) / source / "_runs" / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
+
+    raw_path = run_dir / "raw.json"
+    request_path = run_dir / "request.json"
 
     # IMPORTANT: ensure request_meta does NOT include api_key
     with open(run_dir / "raw.json", "w", encoding="utf-8") as f:
@@ -24,6 +27,8 @@ def save_raw_per_run(
 
     with open(run_dir / "request.json", "w", encoding="utf-8") as f:
         json.dump(request_meta, f, ensure_ascii=False, indent=2)
+
+    return [str(raw_path), str(request_path)]
 
 
 def save_partitioned_csv(

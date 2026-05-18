@@ -3,6 +3,7 @@ import pandas as pd
 from src.ingest.weather_client import fetch_weather_data
 from src.transform.weather_transform import transform_weather_data
 from src.storage.write_raw import make_run_id, save_raw_per_run, save_partitioned_csv
+from src.storage.azure_blob_writer import upload_files_to_azure
 from src.storage.paths import RAW_DIR, PROCESSED_DIR, LOGS_DIR
 from src.validation.checks import (
     check_not_empty,
@@ -20,6 +21,9 @@ from src.config import (
     WEATHER_START_DATE,
     WEATHER_END_DATE,
     WEATHER_HOURLY_VARIABLE,
+    ENABLE_AZURE_UPLOAD,
+    AZURE_STORAGE_CONNECTION_STRING,
+    AZURE_STORAGE_CONTAINER,
 )
 
 logger = get_logger("src.pipeline.weather_pipeline")
@@ -52,7 +56,7 @@ def run_weather_pipeline() -> pd.DataFrame:
     check_temperature_values(clean_df, "Processed weather data")
     logger.info("Validated processed weather data")
 
-    save_raw_per_run(
+    raw_output_paths = save_raw_per_run(
         base_dir = RAW_DIR,
         source = WEATHER_SOURCE,
         run_id = run_id,
@@ -61,7 +65,7 @@ def run_weather_pipeline() -> pd.DataFrame:
     )
     logger.info(f"Saved raw weather payload and request metadata. Run ID: {run_id}")
 
-    save_partitioned_csv(
+    csv_output_paths = save_partitioned_csv(
         base_dir =  PROCESSED_DIR,
         source = WEATHER_SOURCE,
         df = clean_df,
@@ -69,15 +73,60 @@ def run_weather_pipeline() -> pd.DataFrame:
     )
     logger.info(f"Saved processed weather data. Run ID: {run_id}")
 
-    write_run_summary(
+
+    artifact_paths = raw_output_paths + csv_output_paths
+
+    azure_uploaded = False
+    azure_uploaded_file_count = 0
+
+    if ENABLE_AZURE_UPLOAD:
+        if not AZURE_STORAGE_CONNECTION_STRING:
+            raise ValueError(
+                "ENABLE_AZURE_UPLOAD is true, but AZURE_STORAGE_CONNECTION_STRING is not set."
+            )
+        
+        uploaded_blob_names = upload_files_to_azure(
+            local_paths = artifact_paths,
+            connection_string = AZURE_STORAGE_CONNECTION_STRING,
+            container_name = AZURE_STORAGE_CONTAINER,
+        )
+
+        azure_uploaded = True
+        azure_uploaded_file_count = len(uploaded_blob_names)
+
+        logger.info(
+            f"Uploaded {azure_uploaded_file_count} weather artifacts to Azure Blob Storage. "
+            f"Run ID: {run_id}"
+        )
+    else:
+        logger.info("Skipping Azure upload for weather artifacts because ENABLE_AZURE_UPLOAD is false")
+
+    extra_metadata = {
+        "azure_uploaded": azure_uploaded,
+        "azure_container": AZURE_STORAGE_CONTAINER if azure_uploaded else None,
+        "azure_uploaded_file_count": azure_uploaded_file_count,
+    }
+
+
+    summary_path = write_run_summary(
         base_dir = LOGS_DIR,
         source = WEATHER_SOURCE,
         run_id = run_id,
         df = clean_df,
         output_formats = ["csv"],
         validation_status = "passed",
+        extra_metadata = extra_metadata
     )
     logger.info(f"Wrote run summary. Run ID: {run_id}")
+
+    if ENABLE_AZURE_UPLOAD:
+        upload_files_to_azure(
+            local_paths = [summary_path],
+            connection_string = AZURE_STORAGE_CONNECTION_STRING,
+            container_name = AZURE_STORAGE_CONTAINER,
+        )
+        logger.info(f"Uploaded weather run summary to Azure Blob Storage. Run ID: {run_id}")
+
 
     logger.info(f"Weather pipeline completed. Run ID: {run_id}")
     logger.info(f"Processed weather shape: {clean_df.shape}")
