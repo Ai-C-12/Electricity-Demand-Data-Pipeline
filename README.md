@@ -21,10 +21,11 @@ Current capabilities:
 - Validate merge retention and continuous hourly timestamp coverage
 - Run the feature pipeline through a granular Prefect flow with separate EIA, weather, and feature-building tasks
 - Optionally load the final demand-weather feature dataset into PostgreSQL using an upsert on region and timestamp
+- Optionally upload generated feature CSV and Parquet artifacts to Azure Blob Storage
 
 Future planned work:
 
-- Add cloud storage for raw and processed pipeline artifacts
+- Expand Azure Blob uploads to raw API payloads, request metadata, and run summary JSON files
 - Add a dashboard or analytics layer on top of the PostgreSQL/Parquet feature dataset
 - Add a forecasting-ready ML workflow
 - Add stronger production deployment options such as Docker or scheduled Prefect deployments
@@ -93,7 +94,8 @@ Electricity-Demand-Data-Pipeline/
 │
 ├─ scripts/
 │  ├─ __init__.py
-│  └─ manual_postgres_writer_check.py
+│  ├─ manual_postgres_writer_check.py
+│  └─ manual_azure_upload_check.py
 │
 ├─ sql/
 │  └─ demand_weather_features.sql
@@ -117,6 +119,7 @@ Electricity-Demand-Data-Pipeline/
 │  │
 │  ├─ storage/
 │  │  ├─ __init__.py
+│  │  ├─ azure_blob_writer.py
 │  │  ├─ paths.py
 │  │  ├─ postgres_writer.py
 │  │  └─ write_raw.py
@@ -214,6 +217,8 @@ logs/run_summaries/weather_data/<run_id>.json
 logs/run_summaries/demand_weather_features/<run_id>.json
 ```
 
+For optional infrastructure steps, the feature run summary records whether PostgreSQL loading and Azure Blob upload were enabled, including the PostgreSQL table name and Azure uploaded file count when applicable.
+
 ### PostgreSQL Output
 
 The project also supports an optional PostgreSQL load for the final `demand_weather_features` table.
@@ -233,6 +238,31 @@ ENABLE_POSTGRES_LOAD=false
 ```
 
 When ENABLE_POSTGRES_LOAD=true, the feature pipeline creates the table if needed and upserts the merged feature dataset into PostgreSQL.
+
+### Azure Blob Storage Output
+
+The project also supports optional Azure Blob Storage uploads for generated feature artifacts.
+
+When enabled, the feature pipeline uploads the partitioned `demand_weather_features` CSV and Parquet files to an Azure Blob container after the files are written locally.
+
+Example local feature files:
+```text
+data/processed/demand_weather_features/year=2025/month=01/day=01/part-<run_id>.csv
+data/processed/demand_weather_features/year=2025/month=01/day=01/part-<run_id>.parquet
+```
+
+Example Azure blob paths:
+```text
+processed/demand_weather_features/year=2025/month=01/day=01/part-<run_id>.csv
+processed/demand_weather_features/year=2025/month=01/day=01/part-<run_id>.parquet
+```
+
+Azure upload is controlled by environment variables:
+```env
+ENABLE_AZURE_UPLOAD=false
+AZURE_STORAGE_CONNECTION_STRING=your_azure_storage_connection_string_here
+AZURE_STORAGE_CONTAINER=electricity-pipeline
+```
 
 ## Validation
 The pipeline validates data before saving processed outputs.
@@ -321,14 +351,20 @@ pip install -r requirements.txt
 Create a local .env file or set the variable in your shell. Do not commit real API keys.
 
 Required variable:
-```
+```env
 EIA_API_KEY=your_eia_api_key_here
 
 DATABASE_URL=postgresql+psycopg2://username:password@localhost:5432/electricity_pipeline
 ENABLE_POSTGRES_LOAD=false
+
+ENABLE_AZURE_UPLOAD=false
+AZURE_STORAGE_CONNECTION_STRING=your_azure_storage_connection_string_here
+AZURE_STORAGE_CONTAINER=electricity-pipeline
 ```
 
-Set ENABLE_POSTGRES_LOAD=true only when a local PostgreSQL database is running and you want the feature pipeline to load the final dataset into Postgres.
+Set `ENABLE_POSTGRES_LOAD=true` only when a local PostgreSQL database is running and you want the feature pipeline to load the final dataset into PostgreSQL.
+
+Set `ENABLE_AZURE_UPLOAD=true` only when Azure Blob Storage is configured and you want the feature pipeline to upload generated feature artifacts.
 
 ## Running the Pipeline
 Run EIA pipeline:
@@ -352,14 +388,13 @@ Run Prefect-orchestrated feature pipeline:
 python -m src.orchestration.flows
 ```
 
-The feature pipeline runs the EIA pipeline, runs the weather pipeline, merges the processed outputs, validates the merged dataset, checks merge retention and hourly timestamp coverage, saves the final feature table as both CSV and Parquet, optionally upserts the final feature table into PostgreSQL, and writes JSON run summaries for the source and feature datasets.
+The feature pipeline runs the EIA pipeline, runs the weather pipeline, merges the processed outputs, validates the merged dataset, checks merge retention and hourly timestamp coverage, saves the final feature table as both CSV and Parquet, optionally upserts the final feature table into PostgreSQL, optionally uploads generated feature artifacts to Azure Blob Storage, and writes JSON run summaries for the source and feature datasets.
 
 ## Current Development Range
 The current dataset covers one year of hourly data, producing approximately 8,760 merged feature rows for the NYIS region.
 
 ## Next Steps
-1. Update documentation and handoff notes for the PostgreSQL milestone
-2. Add cloud storage for raw and processed artifacts
-3. Build a dashboard or analytics layer using the Parquet/PostgreSQL feature dataset
-4. Add a forecasting-ready ML workflow
-5. Add production deployment polish such as Docker or scheduled Prefect deployments
+1. Expand Azure Blob uploads to raw API payloads, request metadata, and run summary JSON files
+2. Add a dashboard or analytics layer using the Parquet/PostgreSQL feature dataset
+3. Add a forecasting-ready ML workflow
+4. Add production deployment polish such as Docker or scheduled Prefect deployments
