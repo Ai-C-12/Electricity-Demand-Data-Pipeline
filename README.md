@@ -21,14 +21,14 @@ Current capabilities:
 - Validate merge retention and continuous hourly timestamp coverage
 - Run the feature pipeline through a granular Prefect flow with separate EIA, weather, and feature-building tasks
 - Optionally load the final demand-weather feature dataset into PostgreSQL using an upsert on region and timestamp
-- Optionally upload generated feature CSV and Parquet artifacts to Azure Blob Storage
+- Optionally upload raw API payloads, request metadata, processed outputs, feature CSV/Parquet artifacts, and run summaries to Azure Blob Storage
 
 Future planned work:
 
-- Expand Azure Blob uploads to raw API payloads, request metadata, and run summary JSON files
-- Add a dashboard or analytics layer on top of the PostgreSQL/Parquet feature dataset
+- Add a dashboard or analytics layer on top of the PostgreSQL/Parquet/Azure-backed feature dataset
 - Add a forecasting-ready ML workflow
 - Add stronger production deployment options such as Docker or scheduled Prefect deployments
+- Add more production-oriented orchestration options such as Prefect deployments or scheduled runs
 
 ## Data Sources
 
@@ -241,20 +241,50 @@ When ENABLE_POSTGRES_LOAD=true, the feature pipeline creates the table if needed
 
 ### Azure Blob Storage Output
 
-The project also supports optional Azure Blob Storage uploads for generated feature artifacts.
+The project also supports optional Azure Blob Storage uploads for generated pipeline artifacts.
 
-When enabled, the feature pipeline uploads the partitioned `demand_weather_features` CSV and Parquet files to an Azure Blob container after the files are written locally.
+When enabled, the pipeline uploads raw API payloads, request metadata, processed CSV outputs, feature CSV/Parquet outputs, and run summary JSON files to an Azure Blob container after the files are written locally.
 
-Example local feature files:
+Example local raw files:
 ```text
+data/raw/eia_region_data/_runs/<run_id>/raw.json
+data/raw/eia_region_data/_runs/<run_id>/request.json
+
+data/raw/weather_data/_runs/<run_id>/raw.json
+data/raw/weather_data/_runs/<run_id>/request.json
+```
+
+Example local processed files:
+```text
+data/processed/eia_region_data/year=2025/month=01/day=01/part-<run_id>.csv
+data/processed/weather_data/year=2025/month=01/day=01/part-<run_id>.csv
 data/processed/demand_weather_features/year=2025/month=01/day=01/part-<run_id>.csv
 data/processed/demand_weather_features/year=2025/month=01/day=01/part-<run_id>.parquet
 ```
 
+Example local run summary files:
+```text
+logs/run_summaries/eia_region_data/<run_id>.json
+logs/run_summaries/weather_data/<run_id>.json
+logs/run_summaries/demand_weather_features/<run_id>.json
+```
+
 Example Azure blob paths:
 ```text
+raw/eia_region_data/_runs/<run_id>/raw.json
+raw/eia_region_data/_runs/<run_id>/request.json
+
+raw/weather_data/_runs/<run_id>/raw.json
+raw/weather_data/_runs/<run_id>/request.json
+
+processed/eia_region_data/year=2025/month=01/day=01/part-<run_id>.csv
+processed/weather_data/year=2025/month=01/day=01/part-<run_id>.csv
 processed/demand_weather_features/year=2025/month=01/day=01/part-<run_id>.csv
 processed/demand_weather_features/year=2025/month=01/day=01/part-<run_id>.parquet
+
+run_summaries/eia_region_data/<run_id>.json
+run_summaries/weather_data/<run_id>.json
+run_summaries/demand_weather_features/<run_id>.json
 ```
 
 Azure upload is controlled by environment variables:
@@ -263,6 +293,10 @@ ENABLE_AZURE_UPLOAD=false
 AZURE_STORAGE_CONNECTION_STRING=your_azure_storage_connection_string_here
 AZURE_STORAGE_CONTAINER=electricity-pipeline
 ```
+
+Azure upload is disabled by default so local development, pytest, and GitHub Actions do not require cloud credentials.
+
+The Azure connection string should only be stored in a local .env file or secure environment variable. It should never be committed to GitHub.
 
 ## Validation
 The pipeline validates data before saving processed outputs.
@@ -388,13 +422,13 @@ Run Prefect-orchestrated feature pipeline:
 python -m src.orchestration.flows
 ```
 
-The feature pipeline runs the EIA pipeline, runs the weather pipeline, merges the processed outputs, validates the merged dataset, checks merge retention and hourly timestamp coverage, saves the final feature table as both CSV and Parquet, optionally upserts the final feature table into PostgreSQL, optionally uploads generated feature artifacts to Azure Blob Storage, and writes JSON run summaries for the source and feature datasets.
+The feature pipeline runs the EIA pipeline, runs the weather pipeline, saves raw API payloads and request metadata, saves processed source outputs, merges the processed outputs, validates the merged dataset, checks merge retention and hourly timestamp coverage, saves the final feature table as both CSV and Parquet, optionally upserts the final feature table into PostgreSQL, optionally uploads generated raw/processed/feature/run-summary artifacts to Azure Blob Storage, and writes JSON run summaries for the source and feature datasets.
 
 ## Current Development Range
 The current dataset covers one year of hourly data, producing approximately 8,760 merged feature rows for the NYIS region.
 
 ## Next Steps
-1. Expand Azure Blob uploads to raw API payloads, request metadata, and run summary JSON files
-2. Add a dashboard or analytics layer using the Parquet/PostgreSQL feature dataset
-3. Add a forecasting-ready ML workflow
-4. Add production deployment polish such as Docker or scheduled Prefect deployments
+1. Add a dashboard or analytics layer using the Parquet/PostgreSQL/Azure-backed feature dataset
+2. Add a forecasting-ready ML workflow
+3. Add production deployment polish such as Docker or scheduled Prefect deployments
+4. Add more robust cloud/orchestration patterns only after the analytics layer is useful
