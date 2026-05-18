@@ -19,8 +19,16 @@ from src.validation.checks import (
 )
 from src.utils.logger import get_logger
 from src.utils.run_summary import write_run_summary
-from src.config import FEATURE_SOURCE, DATABASE_URL, ENABLE_POSTGRES_LOAD
+from src.config import(
+    FEATURE_SOURCE, 
+    DATABASE_URL, 
+    ENABLE_POSTGRES_LOAD, 
+    ENABLE_AZURE_UPLOAD, 
+    AZURE_STORAGE_CONNECTION_STRING, 
+    AZURE_STORAGE_CONTAINER,
+)
 from src.storage.postgres_writer import create_postgres_tables, write_to_postgres
+from src.storage.azure_blob_writer import upload_files_to_azure
 
 
 logger = get_logger("src.pipeline.feature_pipeline")
@@ -80,6 +88,7 @@ def build_feature_dataset(
     )
     logger.info(f"Saved {len(parquet_output_paths)} Parquet feature partitions. Run ID: {run_id}")
 
+    # Optionally load to PostgreSQL
     postgres_loaded = False
 
     if ENABLE_POSTGRES_LOAD:
@@ -98,6 +107,35 @@ def build_feature_dataset(
         logger.info(f"Loaded feature dataset into PostgreSQL. Run ID: {run_id}")
     else:
         logger.info("Skipping PostgreSQL load because ENABLE_POSTGRES_LOAD is false")
+
+    # Optionally load to Azure Blob Storage
+    azure_uploaded = False
+    azure_uploaded_file_count = 0
+
+    if ENABLE_AZURE_UPLOAD:
+        if not AZURE_STORAGE_CONNECTION_STRING:
+            raise ValueError(
+                "ENABLE_AZURE_UPLOAD is true, but AZURE_STORAGE_CONNECTION_STRING is not set."
+            )
+
+        artifact_path = csv_output_paths + parquet_output_paths
+
+        upload_blob_names = upload_files_to_azure(
+            local_paths = artifact_path,
+            connection_string = AZURE_STORAGE_CONNECTION_STRING,
+            container_name = AZURE_STORAGE_CONTAINER,
+        )
+
+        azure_uploaded = True
+        azure_uploaded_file_count = len(upload_blob_names)
+
+        logger.info(
+        f"Uploaded {azure_uploaded_file_count} feature artifacts to Azure Blob Storage. "
+        f"Run ID: {run_id}"
+        )
+    else:
+        logger.info("Skipping Azure upload because ENABLE_AZURE_UPLOAD is false")
+
 
     pipeline_duration_seconds = round(perf_counter() - start_time, 2)
 
@@ -131,6 +169,9 @@ def build_feature_dataset(
         },
         "postgres_loaded": postgres_loaded,
         "postgres_table": "demand_weather_features" if postgres_loaded else None,
+        "azure_uploaded": azure_uploaded,
+        "azure_container": AZURE_STORAGE_CONTAINER if azure_uploaded else None,
+        "azure_uploaded_file_count": azure_uploaded_file_count,
     }
 
     write_run_summary(
