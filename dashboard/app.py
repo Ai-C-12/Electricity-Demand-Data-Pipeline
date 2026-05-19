@@ -58,22 +58,6 @@ month_names = {
 }
 
 
-# Metric Card Font Size
-st.markdown(
-    """
-    <style>
-    [data-testid="stMetricValue"] {
-        font-size: 1.2rem;
-    }
-
-    [data-testid="stMetricLabel"] {
-        font-size: 0.9rem;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
 start_date = df["timestamp_utc"].min().strftime("%Y-%m-%d")
 end_date = df["timestamp_utc"].max().strftime("%Y-%m-%d")
 
@@ -136,6 +120,11 @@ st.scatter_chart(
     y_label="Demand (MWh)", 
 )
 
+st.caption(
+    "This chart shows how hourly electricity demand changes across observed temperatures. "
+    "Higher temperatures appear associated with higher demand, likely reflecting cooling demand."
+)
+
 st.divider()
 
 # Average demand daily
@@ -157,6 +146,11 @@ st.line_chart(
     y_label="Average Daily Demand (MWh)",
 )
 
+st.caption(
+    "Daily averages smooth the hourly data and make seasonal demand patterns easier to see. "
+    "The highest demand periods appear to occur during the summer months, which may reflect increased cooling demand."
+)
+
 st.divider()
 
 # Top 20 Highest Demand Hours  
@@ -166,21 +160,30 @@ top_demand_df["day_of_month"] = top_demand_df["timestamp_utc"].dt.day
 
 top_demand_df["month_name"] = top_demand_df["month"].map(month_names)
 
+display_top_demand_df = top_demand_df[
+    [
+        "timestamp_utc",
+        "region",
+        "demand_mwh",
+        "temperature_2m",
+        "hour",
+        "day_of_month",
+        "month_name",
+    ]
+].rename(
+    columns={
+        "timestamp_utc": "Timestamp (UTC)",
+        "region": "Region",
+        "demand_mwh": "Demand (MWh)",
+        "temperature_2m": "Temperature (°C)",
+        "hour": "Hour",
+        "day_of_month": "Day",
+        "month_name": "Month",
+    }
+).reset_index()
+
 st.subheader("Top 20 Highest-Demand Hours")
-st.dataframe(
-    top_demand_df[
-        [
-            "timestamp_utc",
-            "region",
-            "demand_mwh",
-            "temperature_2m",
-            "hour",
-            "day_of_month",
-            "month_name",
-        ]
-    ],
-    use_container_width=True,
-)
+st.dataframe(display_top_demand_df, use_container_width=True)
 
 avg_top_temp = top_demand_df["temperature_2m"].mean()
 overall_avg_temp = df["temperature_2m"].mean()
@@ -208,8 +211,15 @@ top_days = (
     .head(10)
 )
 
+display_top_days = top_days.rename(
+    columns={
+        "timestamp_utc": "Timestamp (UTC)",
+        "avg_daily_demand_mwh": "Average Daily Demand (MWh)",
+    }
+).reset_index()
+
 st.subheader("Top 10 Highest Average Demand Days")
-st.dataframe(top_days, use_container_width=True)
+st.dataframe(display_top_days, use_container_width=True)
 
 st.divider()
 
@@ -242,6 +252,10 @@ st.bar_chart(
     y="avg_demand_mwh",
     x_label="Temperature Range (°C)",
     y_label="Average Demand (MWh)",
+)
+
+st.caption(
+    "Binning temperatures into ranges makes the temperature-demand relationship easier to compare than individual hourly points."
 )
 
 st.divider()
