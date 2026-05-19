@@ -42,16 +42,6 @@ def load_data(database_url: str) -> pd.DataFrame:
 
 df = load_data(DATABASE_URL)
 
-day_names = {
-    0: "Monday",
-    1: "Tuesday",
-    2: "Wednesday",
-    3: "Thursday",
-    4: "Friday",
-    5: "Saturday",
-    6: "Sunday",
-}
-
 month_names = {
     1: "January",
     2: "February",
@@ -68,6 +58,72 @@ month_names = {
 }
 
 
+# Metric Card Font Size
+st.markdown(
+    """
+    <style>
+    [data-testid="stMetricValue"] {
+        font-size: 1.2rem;
+    }
+
+    [data-testid="stMetricLabel"] {
+        font-size: 0.9rem;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+start_date = df["timestamp_utc"].min().strftime("%Y-%m-%d")
+end_date = df["timestamp_utc"].max().strftime("%Y-%m-%d")
+
+avg_demand = df["demand_mwh"].mean()
+peak_demand = df["demand_mwh"].max()
+
+avg_temp_c = df["temperature_2m"].mean()
+
+col1, col2, col3 = st.columns(3)
+col4, col5, col6 = st.columns(3)
+
+col1.metric(
+    label="Start Date",
+    value=start_date,
+    border=True,
+)
+
+col2.metric(
+    label="End Date",
+    value=end_date,
+    border=True,
+)
+
+col3.metric(
+    label="Total Rows",
+    value=f"{len(df):,}",
+    border=True,
+)
+
+col4.metric(
+    label="Average Demand",
+    value=f"{avg_demand:,.0f} MWh",
+    border=True,
+)
+
+col5.metric(
+    label="Peak Demand",
+    value=f"{peak_demand:,.0f} MWh",
+    border=True,
+)
+
+col6.metric(
+    label="Average Temperature",
+    value=f"{avg_temp_c:.2f}°C",
+    border=True,
+)
+
+st.divider()
+
+# Temperature to Demand Relationship
 scatter_df = df[df["demand_mwh"] > 0]
 
 st.subheader("Temperature vs Electricity Demand")
@@ -80,14 +136,9 @@ st.scatter_chart(
     y_label="Demand (MWh)", 
 )
 
+st.divider()
 
-# Average demand hourly, daily, and monthly
-hourly_demand = (
-    df.groupby("hour", as_index=False)["demand_mwh"]
-    .mean()
-    .rename(columns={"demand_mwh": "avg_demand_mwh"})
-)
-
+# Average demand daily
 daily_demand = (
     df.set_index("timestamp_utc")
     .resample("D")["demand_mwh"]
@@ -96,13 +147,7 @@ daily_demand = (
     .rename(columns={"demand_mwh": "avg_daily_demand_mwh"})
 )
 
-monthly_demand = (
-    df.groupby("month", as_index=False)["demand_mwh"]
-    .mean()
-    .rename(columns={"demand_mwh": "avg_demand_mwh"})
-)
-
-
+# Average Daily Demand
 st.subheader("Average Daily Electricity Demand")
 st.line_chart(
     data=daily_demand,
@@ -112,10 +157,11 @@ st.line_chart(
     y_label="Average Daily Demand (MWh)",
 )
 
+st.divider()
 
+# Top 20 Highest Demand Hours  
 top_demand_df = df.sort_values("demand_mwh", ascending=False).head(20).copy()
 
-top_demand_df["date"] = top_demand_df["timestamp_utc"].dt.date
 top_demand_df["day_of_month"] = top_demand_df["timestamp_utc"].dt.day
 
 top_demand_df["month_name"] = top_demand_df["month"].map(month_names)
@@ -130,9 +176,82 @@ st.dataframe(
             "temperature_2m",
             "hour",
             "day_of_month",
-            "month",
             "month_name",
         ]
     ],
     use_container_width=True,
 )
+
+avg_top_temp = top_demand_df["temperature_2m"].mean()
+overall_avg_temp = df["temperature_2m"].mean()
+
+temp_col1, temp_col2 = st.columns(2)
+
+temp_col1.metric(
+    "Avg Temp During Top 20 Demand Hours",
+    f"{avg_top_temp:.1f} °C",
+    border=True,
+)
+
+temp_col2.metric(
+    "Overall Avg Temp",
+    f"{overall_avg_temp:.1f} °C",
+    border=True,
+)
+
+st.divider()
+
+# Top 10 Highest Daily Demands
+top_days = (
+    daily_demand
+    .sort_values("avg_daily_demand_mwh", ascending=False)
+    .head(10)
+)
+
+st.subheader("Top 10 Highest Average Demand Days")
+st.dataframe(top_days, use_container_width=True)
+
+st.divider()
+
+# Average Demand at Different Temperatures
+df["temperature_bucket"] = pd.cut(
+    df["temperature_2m"],
+    bins=[float("-inf"), 0, 5, 10, 15, 20, 25, 30, float("inf")],
+    labels= [
+        "<0°C",
+        "0-5°C",
+        "5-10°C",
+        "10-15°C",
+        "15-20°C",
+        "20-25°C",
+        "25-30°C",
+        "30°C+",
+    ],
+)
+
+temp_bucket_demand = (
+    df.groupby("temperature_bucket", as_index=False)["demand_mwh"]
+    .mean()
+    .rename(columns={"demand_mwh": "avg_demand_mwh"})
+)   
+
+st.subheader("Average Demand by Temperature Range")
+st.bar_chart(
+    data=temp_bucket_demand,
+    x="temperature_bucket",
+    y="avg_demand_mwh",
+    x_label="Temperature Range (°C)",
+    y_label="Average Demand (MWh)",
+)
+
+st.divider()
+
+# Outlier Demand Values
+outlier_df = df[df["demand_mwh"] <= 0]
+
+st.subheader("Potential Demand Outliers")
+
+if outlier_df.empty:
+    st.write("No zero or negative demand values found.")
+else:
+    st.dataframe(outlier_df, use_container_width=True)
