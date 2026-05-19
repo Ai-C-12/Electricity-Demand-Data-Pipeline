@@ -2,7 +2,7 @@
 
 # ⚡ Electricity Demand Data Pipeline
 
-### A production-style data engineering pipeline for hourly electricity demand, weather enrichment, cloud storage, orchestration, analytics-ready feature generation, and dashboard exploration.
+### A production-style data engineering pipeline for NYIS electricity demand, NYC weather enrichment, cloud storage, orchestration, analytics-ready feature generation, and dashboard exploration.
 
 <br />
 
