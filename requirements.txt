@@ -10,3 +10,4 @@ prefect
 sqlalchemy
 psycopg2-binary
 azure-storage-blob
+streamlit
