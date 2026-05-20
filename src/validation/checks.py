@@ -66,6 +66,7 @@ def check_hourly_timestamp_coverage(
     df: pd.DataFrame,
     dataset_name: str,
     timestamp_col: str = "timestamp_utc",
+    allowed_missing_hours = 0,
 ) -> None:
     if timestamp_col not in df.columns:
         raise ValueError(f"{dataset_name}: missing required timestamp column '{timestamp_col}'.")
@@ -86,8 +87,9 @@ def check_hourly_timestamp_coverage(
 
     missing_timestamps = expected_timestamps.difference(pd.DatetimeIndex(timestamps))
 
-    if len(missing_timestamps) > 0:
+    if len(missing_timestamps) > allowed_missing_hours:
         raise ValueError(
             f"{dataset_name}: missing {len(missing_timestamps)} hourly timestamps "
             f"between {timestamps.min()} and {timestamps.max()}."
+            f"Allowed missing hours: {allowed_missing_hours}"
         )
