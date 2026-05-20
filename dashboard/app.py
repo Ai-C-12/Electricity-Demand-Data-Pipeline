@@ -203,10 +203,7 @@ st.line_chart(
     y_label="Average Daily Demand (MWh)",
 )
 
-st.caption(
-    "Daily averages smooth the hourly data and make demand patterns easier to compare across the selected filters. "
-    "The highest demand periods appear to occur during the summer months, which may reflect increased cooling demand."
-)
+st.caption("Daily averages smooth the hourly data and make demand patterns easier to compare across the selected filters.")
 
 st.divider()
 
