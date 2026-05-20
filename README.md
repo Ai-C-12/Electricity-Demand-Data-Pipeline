@@ -2,7 +2,7 @@
 
 # ⚡ Electricity Demand Data Pipeline
 
-### A production-style data engineering pipeline for NYIS electricity demand, NYC weather enrichment, cloud storage, orchestration, analytics-ready feature generation, and dashboard exploration.
+### A production-style data engineering pipeline for NYIS electricity demand, NYC weather enrichment, cloud storage, orchestration, analytics-ready feature generation, and interactive dashboard exploration.
 
 <br />
 
@@ -18,7 +18,7 @@
 
 <br />
 
-> **From raw APIs to analytics-ready insight:** EIA electricity demand + Open-Meteo weather → validated, partitioned, summarized, optionally loaded to PostgreSQL, optionally mirrored to Azure Blob Storage, and explored through a Streamlit dashboard.
+> **From raw APIs to analytics-ready insights:** EIA electricity demand + Open-Meteo weather → validated, partitioned, summarized, optionally loaded to PostgreSQL, optionally mirrored to Azure Blob Storage, and explored through a Streamlit dashboard.
 
 <br />
 
@@ -72,7 +72,7 @@ flowchart LR
     H --> I[Merge Quality Checks]
     I --> J[CSV + Parquet Feature Dataset]
 
-    J --> K[(Optional PostgreSQL Upsert)]
+    J --> K[(Optional PostgreSQL Feature Table)]
     K --> N[Streamlit Analytics Dashboard]
     D --> L[(Optional Azure Blob Upload)]
     G --> L
@@ -114,10 +114,9 @@ flowchart LR
 
 | Priority | Future Work |
 |---|---|
-| 1 | Add dashboard screenshots and interpretation notes |
-| 2 | Add a forecasting-ready machine learning workflow |
-| 3 | Add stronger deployment options such as Docker or scheduled Prefect deployments |
-| 4 | Expand production-oriented orchestration patterns once the analytics layer is useful |
+| 1 | Add a forecasting-ready machine learning workflow |
+| 2 | Add stronger deployment options such as Docker or scheduled Prefect deployments |
+| 3 | Expand production-oriented orchestration patterns once the analytics and ML layers are useful |
 
 ---
 
@@ -173,8 +172,7 @@ Open-Meteo API ----/
 Processed EIA Data + Processed Weather Data
                     → Merge → Validate → Feature Dataset
                     → CSV + Parquet
-                    → Optional PostgreSQL
-                    → Streamlit Dashboard
+                    → Optional PostgreSQL → Streamlit Dashboard
                     → Optional Azure Blob Storage
                     → Run Summary JSON
 ```
@@ -187,6 +185,9 @@ Electricity-Demand-Data-Pipeline/
 │  └─ workflows/
 │     └─ tests.yml
 │
+├─ dashboard/
+│  └─ app.py
+│
 ├─ data/
 │  ├─ raw/
 │  │  ├─ eia_region_data/
@@ -195,6 +196,11 @@ Electricity-Demand-Data-Pipeline/
 │     ├─ eia_region_data/
 │     ├─ weather_data/
 │     └─ demand_weather_features/
+│
+├─ docs/
+│  └─ images/
+│     ├─ dashboard_demand_analysis.png
+│     └─ dashboard_overview.png
 │
 ├─ logs/
 │  └─ run_summaries/
@@ -253,9 +259,6 @@ Electricity-Demand-Data-Pipeline/
 │  ├─ test_run_summary.py
 │  ├─ test_storage_writers.py
 │  └─ test_raw_storage.py
-│
-├─ dashboard/
-│  └─ app.py
 │
 ├─ README.md
 ├─ requirements.txt
@@ -376,13 +379,13 @@ When `ENABLE_POSTGRES_LOAD=true`, the feature pipeline creates the table if need
 
 ## 📈 Streamlit Dashboard
 
-The repo now includes an initial Streamlit analytics dashboard in:
+The repo includes an initial PostgreSQL-backed Streamlit analytics dashboard in:
 
 ```text
 dashboard/app.py
 ```
 
-The dashboard connects to the PostgreSQL `demand_weather_features` table using `DATABASE_URL`, loads the feature dataset, and displays a first analytics layer on top of the pipeline output.
+The dashboard connects to the PostgreSQL `demand_weather_features` table using `DATABASE_URL`, loads the feature dataset, and presents an interactive first analytics layer on top of the pipeline output.
 
 ### Current Dashboard Views
 
@@ -395,8 +398,9 @@ The dashboard connects to the PostgreSQL `demand_weather_features` table using `
 | Highest-demand days | Top 10 days by average demand |
 | Temperature buckets | Average demand across temperature ranges |
 | Outlier check | Flags zero or negative demand values if they appear |
+| Sidebar filters | Date range, month, and temperature range filters that update all metrics, charts, and tables |
 
-Run the dashboard locally after PostgreSQL has been loaded:
+Run the dashboard locally after the PostgreSQL table has been loaded:
 
 ```bash
 streamlit run dashboard/app.py
@@ -404,6 +408,22 @@ streamlit run dashboard/app.py
 
 > [!NOTE]
 > The dashboard is intentionally PostgreSQL-backed right now. CSV/Parquet files remain useful for development and analytics storage, while PostgreSQL provides the live query layer for Streamlit.
+
+### Dashboard Preview
+
+![Dashboard overview](docs/images/dashboard_overview.png)
+
+![Demand analysis](docs/images/dashboard_demand_analysis.png)
+
+### Example Dashboard Insights
+
+- Electricity demand in the NYIS/NYC dataset appears temperature-sensitive, with higher demand during warmer periods.
+- Daily average demand varies across the year, suggesting seasonal demand patterns rather than a flat year-round load.
+- Demand appears lowest during milder outdoor temperatures, likely because heating and cooling needs are reduced.
+- Grouping temperatures into ranges makes the temperature-demand relationship easier to compare than individual hourly points.
+- Peak demand hours can be compared against the overall average temperature to assess whether high-demand periods occur under warmer-than-average conditions.
+
+---
 
 ## ☁️ Azure Blob Storage Output
 
@@ -485,7 +505,7 @@ The project includes a lightweight pytest suite for core local logic. Tests avoi
 | Raw storage JSON writing | ✅ |
 | Partitioned CSV writer | ✅ |
 | Partitioned Parquet writer | ✅ |
-| Dashboard smoke checks | Manual / local |
+| Dashboard smoke check | Manual local check |
 
 Run tests locally:
 
@@ -493,12 +513,14 @@ Run tests locally:
 pytest
 ```
 
-Live PostgreSQL and Azure checks are kept as manual scripts under `scripts/` instead of pytest tests, because CI should not require external services or secrets.
+Live PostgreSQL, Azure, and dashboard checks are kept outside the pytest suite, because CI should not require external services, secrets, or a running database-backed dashboard.
 
 ```text
 scripts/manual_postgres_writer_check.py
 scripts/manual_azure_upload_check.py
 ```
+
+The dashboard can be smoke-checked manually with `streamlit run dashboard/app.py` after `DATABASE_URL` points to a populated PostgreSQL database.
 
 ---
 
@@ -633,10 +655,9 @@ flowchart TD
 
 ### Next Steps
 
-1. Add dashboard screenshots and brief interpretation notes to the README.
-2. Add a forecasting-ready machine learning workflow.
-3. Add production deployment polish such as Docker or scheduled Prefect deployments.
-4. Add more robust cloud and orchestration patterns only after the analytics and ML layers are useful.
+1. Add a forecasting-ready machine learning workflow.
+2. Add production deployment polish such as Docker or scheduled Prefect deployments.
+3. Add more robust cloud and orchestration patterns only after the analytics and ML layers are useful.
 
 ---
 
