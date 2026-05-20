@@ -40,6 +40,7 @@ def load_data(database_url: str) -> pd.DataFrame:
 
     return df
 
+
 df = load_data(DATABASE_URL)
 
 month_names = {
@@ -58,13 +59,72 @@ month_names = {
 }
 
 
-start_date = df["timestamp_utc"].min().strftime("%Y-%m-%d")
-end_date = df["timestamp_utc"].max().strftime("%Y-%m-%d")
+filtered_df = df.copy()
 
-avg_demand = df["demand_mwh"].mean()
-peak_demand = df["demand_mwh"].max()
+st.sidebar.header("Filters")
+st.sidebar.caption("All metrics, charts, and tables update based on the selected filters.")
 
-avg_temp_c = df["temperature_2m"].mean()
+min_date = df["timestamp_utc"].dt.date.min()
+max_date = df["timestamp_utc"].dt.date.max()
+
+filtered_df["month_names"] = filtered_df["month"].map(month_names)
+
+min_temp = float(df["temperature_2m"].min())
+max_temp = float(df["temperature_2m"].max())
+
+selected_temp_range = st.sidebar.slider(
+    "Temperature Range (°C)",
+    min_value=min_temp,
+    max_value=max_temp,
+    value=(min_temp, max_temp),
+)
+
+selected_date_range = st.sidebar.date_input(
+    "Date range",
+    value=(min_date, max_date),
+    min_value=min_date,
+    max_value=max_date,
+)
+
+selected_month = st.sidebar.multiselect(
+    "Select Month", 
+    options=list(month_names.values()),
+    default=list(month_names.values()),
+    key="month_filter",
+)
+
+
+if isinstance(selected_date_range, tuple) and len(selected_date_range) == 2:
+    start_date, end_date = selected_date_range
+
+    filtered_df = filtered_df[
+        (filtered_df["timestamp_utc"].dt.date >= start_date)
+        & (filtered_df["timestamp_utc"].dt.date <= end_date)
+    ]
+
+filtered_df = filtered_df[
+    filtered_df["month_names"].isin(selected_month)
+]
+
+temp_min, temp_max = selected_temp_range
+
+filtered_df = filtered_df[
+    (filtered_df["temperature_2m"] >= temp_min)
+    & (filtered_df["temperature_2m"] <= temp_max)
+]
+
+if filtered_df.empty:
+    st.warning("No data available for the selected filters.")
+    st.stop()
+
+
+start_date = filtered_df["timestamp_utc"].min().strftime("%Y-%m-%d")
+end_date = filtered_df["timestamp_utc"].max().strftime("%Y-%m-%d")
+
+avg_demand = filtered_df["demand_mwh"].mean()
+peak_demand = filtered_df["demand_mwh"].max()
+
+avg_temp_c = filtered_df["temperature_2m"].mean()
 
 col1, col2, col3 = st.columns(3)
 col4, col5, col6 = st.columns(3)
@@ -83,7 +143,7 @@ col2.metric(
 
 col3.metric(
     label="Total Rows",
-    value=f"{len(df):,}",
+    value=f"{len(filtered_df):,}",
     border=True,
 )
 
@@ -108,7 +168,7 @@ col6.metric(
 st.divider()
 
 # Temperature to Demand Relationship
-scatter_df = df[df["demand_mwh"] > 0]
+scatter_df = filtered_df[filtered_df["demand_mwh"] > 0]
 
 st.subheader("Temperature vs Electricity Demand")
 st.scatter_chart(
@@ -120,16 +180,13 @@ st.scatter_chart(
     y_label="Demand (MWh)", 
 )
 
-st.caption(
-    "This chart shows how hourly electricity demand changes across observed temperatures. "
-    "Higher temperatures appear associated with higher demand, likely reflecting cooling demand."
-)
+st.caption("This chart shows how hourly electricity demand changes across observed temperatures within the selected date range.")
 
 st.divider()
 
 # Average demand daily
 daily_demand = (
-    df.set_index("timestamp_utc")
+    filtered_df.set_index("timestamp_utc")
     .resample("D")["demand_mwh"]
     .mean()
     .reset_index()
@@ -147,14 +204,14 @@ st.line_chart(
 )
 
 st.caption(
-    "Daily averages smooth the hourly data and make seasonal demand patterns easier to see. "
+    "Daily averages smooth the hourly data and make demand patterns easier to compare across the selected filters. "
     "The highest demand periods appear to occur during the summer months, which may reflect increased cooling demand."
 )
 
 st.divider()
 
 # Top 20 Highest Demand Hours  
-top_demand_df = df.sort_values("demand_mwh", ascending=False).head(20).copy()
+top_demand_df = filtered_df.sort_values("demand_mwh", ascending=False).head(20).copy()
 
 top_demand_df["day_of_month"] = top_demand_df["timestamp_utc"].dt.day
 
@@ -180,13 +237,13 @@ display_top_demand_df = top_demand_df[
         "day_of_month": "Day",
         "month_name": "Month",
     }
-).reset_index()
+)
 
 st.subheader("Top 20 Highest-Demand Hours")
-st.dataframe(display_top_demand_df, use_container_width=True)
+st.dataframe(display_top_demand_df, use_container_width=True, hide_index=True)
 
 avg_top_temp = top_demand_df["temperature_2m"].mean()
-overall_avg_temp = df["temperature_2m"].mean()
+overall_avg_temp = filtered_df["temperature_2m"].mean()
 
 temp_col1, temp_col2 = st.columns(2)
 
@@ -216,16 +273,18 @@ display_top_days = top_days.rename(
         "timestamp_utc": "Timestamp (UTC)",
         "avg_daily_demand_mwh": "Average Daily Demand (MWh)",
     }
-).reset_index()
+)
 
 st.subheader("Top 10 Highest Average Demand Days")
-st.dataframe(display_top_days, use_container_width=True)
+st.dataframe(display_top_days, use_container_width=True, hide_index=True)
 
 st.divider()
 
 # Average Demand at Different Temperatures
-df["temperature_bucket"] = pd.cut(
-    df["temperature_2m"],
+bucket_df = filtered_df.copy()
+
+bucket_df["temperature_bucket"] = pd.cut(
+    bucket_df["temperature_2m"],
     bins=[float("-inf"), 0, 5, 10, 15, 20, 25, 30, float("inf")],
     labels= [
         "<0°C",
@@ -240,7 +299,7 @@ df["temperature_bucket"] = pd.cut(
 )
 
 temp_bucket_demand = (
-    df.groupby("temperature_bucket", as_index=False)["demand_mwh"]
+    bucket_df.groupby("temperature_bucket", as_index=False)["demand_mwh"]
     .mean()
     .rename(columns={"demand_mwh": "avg_demand_mwh"})
 )   
@@ -261,7 +320,7 @@ st.caption(
 st.divider()
 
 # Outlier Demand Values
-outlier_df = df[df["demand_mwh"] <= 0]
+outlier_df = filtered_df[filtered_df["demand_mwh"] <= 0]
 
 st.subheader("Potential Demand Outliers")
 
