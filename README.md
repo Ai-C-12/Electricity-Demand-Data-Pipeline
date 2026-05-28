@@ -10,7 +10,7 @@ This pipeline pulls hourly electricity demand data from the U.S. Energy Informat
 
 The repository also includes an initial Streamlit dashboard backed by PostgreSQL.
 
-## Reviewer TL;DR
+## TL;DR
 
 This project demonstrates:
 
