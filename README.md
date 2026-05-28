@@ -1,4 +1,4 @@
-# Electricity Demand Data Pipeline
+# Electricity Demand Data Pipeline [![Tests](https://github.com/Ai-C-12/Electricity-Demand-Data-Pipeline/actions/workflows/tests.yml/badge.svg)](https://github.com/Ai-C-12/Electricity-Demand-Data-Pipeline/actions/workflows/tests.yml)
 
 A Python data engineering project that ingests electricity demand and weather data, validates and transforms the data, writes analytics-ready outputs, and optionally loads the final feature table into PostgreSQL and Azure Blob Storage.
 
