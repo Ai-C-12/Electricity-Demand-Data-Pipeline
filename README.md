@@ -149,31 +149,85 @@ Current test areas include:
 
 ```text
 Electricity-Demand-Data-Pipeline/
-├─ .github/workflows/
-│  └─ tests.yml
+├─ .github/
+│  └─ workflows/
+│     └─ tests.yml
+│
 ├─ dashboard/
 │  └─ app.py
+│
 ├─ data/
 │  ├─ raw/
+│  │  ├─ eia_region_data/
+│  │  └─ weather_data/
 │  └─ processed/
-├─ docs/images/
-├─ logs/run_summaries/
+│     ├─ eia_region_data/
+│     ├─ weather_data/
+│     └─ demand_weather_features/
+│
+├─ docs/
+│  └─ images/
+│     ├─ dashboard_demand_analysis.png
+│     └─ dashboard_overview.png
+│
+├─ logs/
+│  └─ run_summaries/
+│     ├─ demand_weather_features/
+│     ├─ eia_region_data/
+│     └─ weather_data/
+│
 ├─ scripts/
+│  ├─ __init__.py
 │  ├─ manual_postgres_writer_check.py
 │  └─ manual_azure_upload_check.py
+│
 ├─ sql/
 │  └─ demand_weather_features.sql
+│
 ├─ src/
 │  ├─ ingest/
+│  │  ├─ eia_client.py
+│  │  └─ weather_client.py
+│  │
 │  ├─ orchestration/
+│  │  └─ flows.py
+│  │
 │  ├─ pipeline/
+│  │  ├─ eia_pipeline.py
+│  │  ├─ weather_pipeline.py
+│  │  ├─ full_pipeline.py
+│  │  └─ feature_pipeline.py
+│  │
 │  ├─ storage/
+│  │  ├─ azure_blob_writer.py
+│  │  ├─ paths.py
+│  │  ├─ postgres_writer.py
+│  │  └─ write_raw.py
+│  │
 │  ├─ transform/
+│  │  ├─ eia_transform.py
+│  │  ├─ weather_transform.py
+│  │  └─ merge_features.py
+│  │
 │  ├─ utils/
+│  │  ├─ logger.py
+│  │  └─ run_summary.py
+│  │
 │  ├─ validation/
+│  │  └─ checks.py
+│  │
 │  ├─ cli.py
 │  └─ config.py
+│
 ├─ tests/
+│  ├─ test_eia_transform.py
+│  ├─ test_weather_transform.py
+│  ├─ test_merge_features.py
+│  ├─ test_validation_checks.py
+│  ├─ test_run_summary.py
+│  ├─ test_storage_writers.py
+│  └─ test_raw_storage.py
+│
 ├─ README.md
 ├─ requirements.txt
 ├─ .gitignore
@@ -319,9 +373,22 @@ streamlit run dashboard/app.py
 
 The project includes a Prefect flow wrapper for the end-to-end feature pipeline.
 
+To run the orchestration flow with the local Prefect UI, start the Prefect server first:
+```bash
+prefect server start
+```
+
+Then, in a second terminal, run:
 ```bash
 python -m src.orchestration.flows
 ```
+
+By default, the local Prefect API runs at:
+```text
+http://127.0.0.1:4200/api
+```
+
+If the flow cannot reach the Prefect API, make sure the local Prefect server is running.
 
 The current flow is split into separate tasks for:
 
