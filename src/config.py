@@ -16,6 +16,17 @@ WEATHER_START_DATE = "2025-01-01"
 WEATHER_END_DATE = "2025-12-31"
 WEATHER_HOURLY_VARIABLE = "temperature_2m"
 
+# Historical weather used for descriptive analysis
+HISTORICAL_WEATHER_API_URL = (
+    "https://archive-api.open-meteo.com/v1/archive"
+)
+
+# Archived weather forecasts used by the forecasting experiment
+FORECAST_WEATHER_API_URL = (
+    "https://previous-runs-api.open-meteo.com/v1/forecast"
+)
+
+
 # Source identifiers
 EIA_SOURCE = "eia_region_data"
 WEATHER_SOURCE = "weather_data"
@@ -32,9 +43,9 @@ def get_eia_api_key() -> str:
 
 # Load Database URL
 DATABASE_URL = os.getenv("DATABASE_URL")
-ENABLE_POSTGRES_LOAD = os.getenv("ENABLE_POSTGRES_LOAD", "false").lower() == "true"
+ENABLE_POSTGRES_LOAD = os.getenv("ENABLE_POSTGRES_LOAD", "false").lower() == "false"
 
 # Azure Blob Storage config
 AZURE_STORAGE_CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
 AZURE_STORAGE_CONTAINER = os.getenv("AZURE_STORAGE_CONTAINER", "electricity-pipeline")
-ENABLE_AZURE_UPLOAD = os.getenv("ENABLE_AZURE_UPLOAD", "false").lower() == "true"
+ENABLE_AZURE_UPLOAD = os.getenv("ENABLE_AZURE_UPLOAD", "false").lower() == "false"

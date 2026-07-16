@@ -1,6 +1,6 @@
 import pandas as pd
 
-from src.ingest.weather_client import fetch_weather_data
+from src.ingest.weather_client import fetch_historical_weather
 from src.transform.weather_transform import transform_weather_data
 from src.storage.write_raw import make_run_id, save_raw_per_run, save_partitioned_csv
 from src.storage.azure_blob_writer import upload_files_to_azure
@@ -15,6 +15,7 @@ from src.validation.checks import (
 from src.utils.logger import get_logger
 from src.utils.run_summary import write_run_summary
 from src.config import (
+    HISTORICAL_WEATHER_API_URL,
     WEATHER_LATITUDE,
     WEATHER_LONGITUDE,
     WEATHER_SOURCE,
@@ -33,7 +34,8 @@ def run_weather_pipeline() -> pd.DataFrame:
 
     run_id = make_run_id()
 
-    df, payload, request_meta = fetch_weather_data(
+    df, payload, request_meta = fetch_historical_weather(
+        url = HISTORICAL_WEATHER_API_URL,
         latitude=WEATHER_LATITUDE,
         longitude=WEATHER_LONGITUDE,
         start_date=WEATHER_START_DATE,

@@ -1,22 +1,27 @@
 import openmeteo_requests
 import pandas as pd
-import requests
 import requests_cache
 from retry_requests import retry
+from src.config import (
+    HISTORICAL_WEATHER_API_URL,
+    FORECAST_WEATHER_API_URL,
+    WEATHER_LATITUDE,
+    WEATHER_LONGITUDE,
+)
 
 
-def fetch_weather_data(
+def _fetch_weather_data(
+    url: str,
     latitude: float,
     longitude: float,
     start_date: str,
     end_date: str,
     hourly_variable: str = "temperature_2m",
+    model: str | None = None,
 ) -> tuple[pd.DataFrame, dict, dict]:
     cache_session = requests_cache.CachedSession(".cache", expire_after=3600)
     retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
     openmeteo = openmeteo_requests.Client(session=retry_session)
-
-    url = "https://archive-api.open-meteo.com/v1/archive"
 
     params = {
         "latitude": latitude,
@@ -27,20 +32,25 @@ def fetch_weather_data(
         "timezone": "UTC",
     }
 
+    if model is not None:
+        params["models"] = model
+
     request_meta = {
         "source": "openmeteo",
+        "endpoint": url,
         "latitude": latitude,
         "longitude": longitude,
         "start_date": start_date,
         "end_date": end_date,
         "hourly_variable": hourly_variable,
+        "model": model,
         "timezone": "UTC",
     }
 
     responses = openmeteo.weather_api(url, params=params)
     response = responses[0]
 
-    raw_response = requests.get(url, params=params, timeout=30)
+    raw_response = retry_session.get(url, params=params, timeout=30)
     raw_response.raise_for_status()
     payload = raw_response.json()
 
@@ -66,3 +76,36 @@ def fetch_weather_data(
     df["longitude"] = longitude
 
     return df, payload, request_meta
+
+def fetch_historical_weather(
+    latitude: float,
+    longitude: float,
+    start_date: str,
+    end_date: str,
+) -> tuple[pd.DataFrame, dict, dict]:
+    
+    return _fetch_weather_data(
+        url = HISTORICAL_WEATHER_API_URL,
+        latitude = latitude,
+        longitude = longitude,
+        start_date = start_date,
+        end_date = end_date,
+        hourly_variable = "temperature_2m",
+    )
+
+def fetch_archived_forecast_weather(
+    latitude: float,
+    longitude: float,
+    start_date: str,
+    end_date: str,
+) -> tuple[pd.DataFrame, dict, dict]:
+    
+    return _fetch_weather_data(
+        url = FORECAST_WEATHER_API_URL,
+        latitude = latitude,
+        longitude = longitude,
+        start_date = start_date,
+        end_date = end_date,
+        hourly_variable = "temperature_2m_previous_day1",
+        model = "gfs_seamless",
+    )
