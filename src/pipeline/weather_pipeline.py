@@ -32,16 +32,21 @@ def _run_weather_pipeline(
     validate_function,
     dataset_name: str,
     source_name: str,
+    start_date: str | None = None,
+    end_date: str | None = None,
 ) -> pd.DataFrame:
     logger.info("Starting weather pipeline")
 
     run_id = make_run_id()
 
+    resolved_start_date = start_date or WEATHER_START_DATE
+    resolved_end_date = end_date or WEATHER_END_DATE
+
     df, payload, request_meta = fetch_function(
         latitude=WEATHER_LATITUDE,
         longitude=WEATHER_LONGITUDE,
-        start_date=WEATHER_START_DATE,
-        end_date=WEATHER_END_DATE,
+        start_date=resolved_start_date,
+        end_date=resolved_end_date,
     )
     logger.info(f"Fetched raw weather data: {len(df)} rows")
 
@@ -129,23 +134,33 @@ def _run_weather_pipeline(
     return clean_df
 
 
-def run_historical_weather_pipeline() -> pd.DataFrame:
+def run_historical_weather_pipeline(
+    start_date: str | None = None,
+    end_date: str | None = None,
+) -> pd.DataFrame:
     return _run_weather_pipeline(
         fetch_function=fetch_historical_weather,
         transform_function=transform_historical_weather,
         validate_function=validate_historical_weather,
         dataset_name="Historical Weather Data",
         source_name="weather_historical",
+        start_date=start_date,
+        end_date=end_date,
     )
 
 
-def run_archived_forecast_weather_pipeline() -> pd.DataFrame:
+def run_archived_forecast_weather_pipeline(
+    start_date: str | None = None,
+    end_date: str | None = None,
+) -> pd.DataFrame:
     return _run_weather_pipeline(
         fetch_function=fetch_archived_forecast_weather,
         transform_function=transform_archived_forecast_weather,
         validate_function=validate_archived_forecast_weather,
         dataset_name="Archived Forecast Weather",
         source_name="weather_forecast_24h",
+        start_date=start_date,
+        end_date=end_date,
     )
 
 

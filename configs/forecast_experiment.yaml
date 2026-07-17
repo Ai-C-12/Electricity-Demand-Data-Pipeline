@@ -1,0 +1,23 @@
+experiment_name: nyis_day_ahead_weather_value
+
+forecast:
+  region: NYIS
+  target_column: demand_mwh
+  horizon_hours: 24
+  prediction_frequency: hourly
+  timezone: America/New_York
+
+data:
+  raw_start_date: "2024-01-20"
+  study_start_date: "2024-02-01"
+  train_end_exclusive: "2025-02-01"
+  validation_end_exclusive: "2025-08-01"
+  test_end_exclusive: "2026-02-01"
+
+features:
+  maximum_lag_hours: 168
+  weather_column: temperature_forecast_24h
+
+splitting:
+  method: chronological
+  test_set_frozen: true

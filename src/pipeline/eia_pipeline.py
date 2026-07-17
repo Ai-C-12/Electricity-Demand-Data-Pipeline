@@ -27,16 +27,22 @@ from src.config import (
 
 logger = get_logger("src.pipeline.eia_pipeline")
 
-def run_eia_pipeline() -> pd.DataFrame:
+def run_eia_pipeline(
+    start_date: str | None = None,
+    end_date: str | None = None,
+) -> pd.DataFrame:
     logger.info("Starting EIA pipeline")
 
     run_id = make_run_id()
 
+    resolved_start_date = start_date or EIA_START
+    resolved_end_date = end_date or EIA_END
+
     df, payload, request_meta = fetch_eia_data(
         respondent=DEFAULT_RESPONDENT,
         data_type=DEFAULT_EIA_TYPE,
-        start=EIA_START,
-        end=EIA_END,
+        start=resolved_start_date,
+        end=resolved_end_date,
         length=5000,  # Max page size for EIA API
     )
     logger.info(f"Fetched raw EIA data: {len(df)} rows")
@@ -102,6 +108,8 @@ def run_eia_pipeline() -> pd.DataFrame:
 
 
     extra_metadata = {
+        "requested_start_date": resolved_start_date,
+        "requested_end_date": resolved_end_date,
         "azure_uploaded": azure_uploaded,
         "azure_container": AZURE_STORAGE_CONTAINER if azure_uploaded else None,
         "azure_uploaded_file_count": azure_uploaded_file_count,
