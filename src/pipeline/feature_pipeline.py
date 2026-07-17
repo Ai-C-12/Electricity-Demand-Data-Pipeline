@@ -1,9 +1,9 @@
 import pandas as pd
 from time import perf_counter
 
-from src.transform.merge_features import merge_df
+from src.transform.merge_features import merge_df, merge_forecasting_inputs
 from src.pipeline.eia_pipeline import run_eia_pipeline
-from src.pipeline.weather_pipeline import run_weather_pipeline
+from src.pipeline.weather_pipeline import run_historical_weather_pipeline, run_archived_forecast_weather_pipeline
 from src.storage.write_raw import make_run_id, save_partitioned_csv, save_partitioned_parquet
 from src.storage.paths import PROCESSED_DIR, LOGS_DIR
 from src.validation.checks import (
@@ -26,6 +26,7 @@ from src.config import(
     ENABLE_AZURE_UPLOAD, 
     AZURE_STORAGE_CONNECTION_STRING, 
     AZURE_STORAGE_CONTAINER,
+    FORECASTING_INPUT_SOURCE
 )
 from src.storage.postgres_writer import create_postgres_tables, write_to_postgres
 from src.storage.azure_blob_writer import upload_files_to_azure
@@ -60,7 +61,7 @@ def build_feature_dataset(
     check_no_missing_values(merged_df, dataset_name)
     check_timestamp_format(merged_df, dataset_name)
     check_demand_values(merged_df, dataset_name)
-    check_temperature_values(merged_df, dataset_name)
+    check_temperature_values(merged_df, dataset_name, "temperature_2m")
     check_duplicate_timestamps_region(merged_df, dataset_name)
 
     # Check merge retention
@@ -201,13 +202,152 @@ def build_feature_dataset(
     return merged_df
 
 
+def build_forecasting_input_dataset(demand_df: pd.DataFrame, forecast_weather_df: pd.DataFrame) -> pd.DataFrame:
+    logger.info("Starting forecasting input dataset build")
+    start_time = perf_counter()
+
+    run_id = make_run_id()
+
+    dataset_name = "Merged Forecast dataset"
+
+    # Merge demand and weather data
+    merged_df = merge_forecasting_inputs(demand_df, forecast_weather_df)
+    logger.info(
+        f"Merged demand and weather data: {len(merged_df)} rows, {len(merged_df.columns)} columns"
+    )
+
+    # Validate merged dataset
+    check_required_columns(
+        merged_df,
+        ["timestamp_utc", "region", "demand_mwh", "temperature_forecast_24h", "hour", "day_of_week", "month"],
+        dataset_name,
+    )
+    check_not_empty(merged_df, dataset_name)
+    check_no_missing_values(merged_df, dataset_name)
+    check_timestamp_format(merged_df, dataset_name)
+    check_demand_values(merged_df, dataset_name)
+    check_temperature_values(merged_df, dataset_name, temperature_col="temperature_forecast_24h")
+    check_duplicate_timestamps_region(merged_df, dataset_name)
+
+    # Check merge retention
+    check_merge_retention(merged_df, demand_df, forecast_weather_df, dataset_name)
+
+    # Check hourly timestamp coverage
+    check_hourly_timestamp_coverage(merged_df, dataset_name)
+    logger.info("Validated merged forecasting input dataset")
+
+    csv_output_paths = save_partitioned_csv(
+        base_dir=PROCESSED_DIR,
+        source=FORECASTING_INPUT_SOURCE,
+        df=merged_df,
+        run_id=run_id,
+    )
+    logger.info(f"Saved {len(csv_output_paths)} CSV feature partitions. Run ID: {run_id}")
+
+    parquet_output_paths = save_partitioned_parquet(
+        base_dir=PROCESSED_DIR,
+        source=FORECASTING_INPUT_SOURCE,
+        df=merged_df,
+        run_id=run_id,
+    )
+    logger.info(f"Saved {len(parquet_output_paths)} Parquet feature partitions. Run ID: {run_id}")
+
+    azure_uploaded = False
+    azure_uploaded_file_count = 0
+
+    if ENABLE_AZURE_UPLOAD:
+        if not AZURE_STORAGE_CONNECTION_STRING:
+            raise ValueError(
+                "ENABLE_AZURE_UPLOAD is true, but AZURE_STORAGE_CONNECTION_STRING is not set."
+            )
+
+        artifact_path = csv_output_paths + parquet_output_paths
+
+        upload_blob_names = upload_files_to_azure(
+            local_paths = artifact_path,
+            connection_string = AZURE_STORAGE_CONNECTION_STRING,
+            container_name = AZURE_STORAGE_CONTAINER,
+        )
+
+        azure_uploaded = True
+        azure_uploaded_file_count = len(upload_blob_names)
+
+        logger.info(
+        f"Uploaded {azure_uploaded_file_count} feature artifacts to Azure Blob Storage. "
+        f"Run ID: {run_id}"
+        )
+    else:
+        logger.info("Skipping Azure upload because ENABLE_AZURE_UPLOAD is false")
+
+    pipeline_duration_seconds = round(perf_counter() - start_time, 2)
+
+    expected_rows = min(len(demand_df), len(forecast_weather_df))
+    merge_retention_rate = len(merged_df) / expected_rows
+
+    output_base_path = f"data/processed/{FORECASTING_INPUT_SOURCE}"
+
+    extra_metadata = {
+        "pipeline_stage": "forecasting_input_build",
+        "weather_type": "archived_24h_forecast",
+        "forecast_horizon_hours": 24,
+        "demand_row_count": len(demand_df),
+        "forecast_weather_row_count": len(forecast_weather_df),
+        "merged_row_count": len(merged_df),
+        "expected_merge_rows": expected_rows,
+        "merge_retention_rate": merge_retention_rate,
+        "merge_retention_status": "passed",
+        "timestamp_coverage_status": "passed",
+        "pipeline_duration_seconds": pipeline_duration_seconds,
+        "outputs": {
+            "csv": {
+                "file_count": len(csv_output_paths),
+                "base_path": output_base_path,
+                "partitioning": ["year", "month", "day"],
+            },
+            "parquet": {
+                "file_count": len(parquet_output_paths),
+                "base_path": output_base_path,
+                "partitioning": ["year", "month", "day"],
+            },
+        },
+        "azure_uploaded": azure_uploaded,
+        "azure_container": AZURE_STORAGE_CONTAINER if azure_uploaded else None,
+        "azure_uploaded_file_count": azure_uploaded_file_count,
+    }
+
+    summary_path = write_run_summary(
+        base_dir=LOGS_DIR,
+        source=FORECASTING_INPUT_SOURCE,
+        run_id=run_id,
+        df=merged_df,
+        output_formats=["csv", "parquet"],
+        validation_status="passed",
+        extra_metadata=extra_metadata,
+    )
+    logger.info(f"Wrote forecasting input run summary. Run ID: {run_id}")
+
+    if ENABLE_AZURE_UPLOAD:
+        upload_files_to_azure(
+            local_paths = [summary_path],
+            connection_string = AZURE_STORAGE_CONNECTION_STRING,
+            container_name = AZURE_STORAGE_CONTAINER,
+        )
+        logger.info(f"Uploaded forecasting run summary to Azure Blob Storage. Run ID: {run_id}")
+
+    logger.info(
+        f"Forecasting input dataset build completed in {pipeline_duration_seconds}s. "
+        f"Rows: {len(merged_df)}. Run ID: {run_id}"
+    )
+
+    return merged_df
+
 
 def run_feature_pipeline() -> pd.DataFrame:
     logger.info("Starting feature pipeline")
 
     demand_df = run_eia_pipeline()
-    weather_df = run_weather_pipeline()
-    logger.info(f"Fetched demand and weather data for feature engineering: {len(demand_df)} demand rows, {len(weather_df)} weather rows")
+    weather_df = run_historical_weather_pipeline()
+    logger.info(f"Fetched demand and historical weather: {len(demand_df)} demand rows, {len(weather_df)} historical weather rows")
 
     merged_df = build_feature_dataset(demand_df, weather_df)
 
@@ -217,5 +357,22 @@ def run_feature_pipeline() -> pd.DataFrame:
 
     return merged_df
 
+
+def run_forecasting_input_pipeline() -> pd.DataFrame:
+    logger.info("Starting forecasting input pipeline")
+
+    demand_df = run_eia_pipeline()
+    forecast_weather_df = run_archived_forecast_weather_pipeline()
+    logger.info(f"Fetched demand and archived forecast weather: {len(demand_df)} demand rows, {len(forecast_weather_df)} forecast weather rows")
+
+    merged_df = build_forecasting_input_dataset(demand_df, forecast_weather_df)
+
+    logger.info(
+    f"Forecasting input pipeline completed: {len(merged_df)} rows & {len(merged_df.columns)} columns")
+
+    return merged_df
+
+
 if __name__ == "__main__":
     run_feature_pipeline()
+    run_forecasting_input_pipeline()

@@ -31,6 +31,7 @@ FORECAST_WEATHER_API_URL = (
 EIA_SOURCE = "eia_region_data"
 WEATHER_SOURCE = "weather_data"
 FEATURE_SOURCE = "demand_weather_features"
+FORECASTING_INPUT_SOURCE = "forecasting_inputs"
 
 # Load environment for API key
 def get_eia_api_key() -> str:
