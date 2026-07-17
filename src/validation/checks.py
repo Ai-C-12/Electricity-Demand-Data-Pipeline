@@ -30,11 +30,32 @@ def check_demand_values(df: pd.DataFrame, dataset_name: str) -> None:
         raise ValueError(f"{dataset_name} contains negative values in demand_mwh column.")
     
 
-def check_temperature_values(df: pd.DataFrame, dataset_name: str) -> None:
-    if not pd.api.types.is_numeric_dtype(df["temperature_2m"]):
-        raise ValueError(f"{dataset_name}'s temperature_2m column must be numeric.")
+def check_temperature_values(
+    df: pd.DataFrame,
+    dataset_name: str,
+    temperature_col: str,
+) -> None:
+    if temperature_col not in df.columns:
+        raise ValueError(
+            f"{dataset_name} is missing temperature column {temperature_col}."
+        )
+
+    if not pd.api.types.is_numeric_dtype(df[temperature_col]):
+        raise ValueError(
+            f"{dataset_name}'s '{temperature_col}' column must be numeric."
+        )
     
 
+def check_duplicate_timestamps(
+    df: pd.DataFrame,
+    dataset_name: str,
+    timestamp_col: str = "timestamp_utc",
+) -> None:
+    if df.duplicated(subset=[timestamp_col]).any():
+        raise ValueError(f"{dataset_name} contains duplicate timestamps.")
+
+
+# For demand
 def check_duplicate_timestamps_region(df: pd.DataFrame, dataset_name: str) -> None:
     if df.duplicated(subset=["timestamp_utc", "region"]).any():
         raise ValueError(f"{dataset_name} contains duplicate timestamp-region pairs.")

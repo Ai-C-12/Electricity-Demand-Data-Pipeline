@@ -11,6 +11,7 @@ from src.validation.checks import (
     check_no_missing_values,
     check_timestamp_format,
     check_temperature_values,
+    check_duplicate_timestamps,
 )
 from src.utils.logger import get_logger
 from src.utils.run_summary import write_run_summary
