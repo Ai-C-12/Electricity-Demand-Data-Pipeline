@@ -49,6 +49,7 @@ mock_artifacts/**
 # READMEs
 Practical_README.md
 Aesthetic_README.md
+README0.md
 
 # Tests
 test_split_data.py

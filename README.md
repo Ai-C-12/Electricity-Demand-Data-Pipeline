@@ -1,505 +1,221 @@
-# Electricity Demand Data Pipeline [![Tests](https://github.com/Ai-C-12/Electricity-Demand-Data-Pipeline/actions/workflows/tests.yml/badge.svg)](https://github.com/Ai-C-12/Electricity-Demand-Data-Pipeline/actions/workflows/tests.yml)
+# Electricity Demand Data Pipeline
 
-A Python data engineering project that ingests electricity demand and weather data, validates and transforms the data, writes analytics-ready outputs, and optionally loads the final feature table into PostgreSQL and Azure Blob Storage.
+A Python data pipeline that combines hourly electricity demand data with historical weather data for New York.
 
-The project was built to practice production-style data engineering patterns such as API ingestion, validation, repeatable loads, orchestration, logging, testing, and basic observability.
+The project collects data from public APIs, cleans and validates it, joins the two datasets by timestamp, and saves the results for analysis. It also includes optional PostgreSQL and Azure Blob Storage support, along with a small Streamlit dashboard.
 
-## Overview
+## Pipeline Overview
 
-This pipeline pulls hourly electricity demand data from the U.S. Energy Information Administration API and hourly weather data from Open-Meteo. It cleans both sources, validates the outputs, merges them by timestamp, and produces a demand-weather feature dataset for analytics and future forecasting work.
+The pipeline uses two data sources:
 
-The repository also includes an initial Streamlit dashboard backed by PostgreSQL.
+- **U.S. Energy Information Administration (EIA):** hourly electricity demand for the NYIS region
+- **Open-Meteo:** hourly historical temperature data for New York City
 
-## TL;DR
-
-This project demonstrates:
-
-- API ingestion from EIA and Open-Meteo
-- Raw API response storage for reproducibility
-- Data cleaning and transformation with Python and pandas
-- Validation checks for missing values, duplicate keys, timestamp coverage, and merge retention
-- CSV and Parquet outputs partitioned by date
-- JSON run summaries and structured logging
-- Optional PostgreSQL loading with upsert logic
-- Optional Azure Blob Storage uploads
-- Prefect orchestration for the feature pipeline
-- Pytest test coverage and GitHub Actions CI
-- A basic PostgreSQL-backed Streamlit dashboard
-
-## Tech Stack
-
-| Area | Tools |
-|---|---|
-| Language | Python |
-| Data processing | pandas, NumPy |
-| Storage formats | JSON, CSV, Parquet |
-| Database | PostgreSQL |
-| Orchestration | Prefect |
-| Cloud storage | Azure Blob Storage |
-| Testing / CI | Pytest, GitHub Actions |
-| Dashboard | Streamlit |
-
-## Data Sources
-
-### EIA Electricity API
-
-The pipeline uses the U.S. Energy Information Administration API to collect hourly electricity demand data.
-
-| Field | Value |
-|---|---|
-| Region | `NYIS` |
-| Data type | Demand |
-| Frequency | Hourly |
-| Current development range | `2025-01-01` to `2025-12-31` |
-
-The EIA API limits responses to 5,000 rows per request, so the ingestion client uses offset-based pagination and stores request metadata for each page.
-
-### Open-Meteo API
-
-The pipeline uses Open-Meteo to collect hourly NYC weather data, currently focused on `temperature_2m`.
-
-| Field | Value |
-|---|---|
-| Location | New York City |
-| Latitude | `40.7128` |
-| Longitude | `-74.0060` |
-| Variable | `temperature_2m` |
-
-The weather data is used as a temperature proxy for exploring demand-weather relationships in the NYIS dataset.
-
-## Pipeline Flow
+The main pipeline follows these steps:
 
 ```text
-EIA API -----------\
-                   \
-                    -> Ingest -> Raw Storage -> Transform -> Validate -> Processed Data
-                   /
-Open-Meteo API ----/
-
-Processed EIA Data + Processed Weather Data
-                    -> Merge -> Validate -> Feature Dataset
-                    -> CSV + Parquet
-                    -> Optional PostgreSQL Load
-                    -> Optional Azure Blob Upload
-                    -> JSON Run Summary
-                    -> Streamlit Dashboard
+EIA API -----------------> Clean and validate demand data ----\
+                                                            \
+                                                             -> Merge by timestamp -> Save feature dataset
+                                                            /
+Open-Meteo API ----------> Clean and validate weather data --/
 ```
 
-## Current Features
+The merged dataset contains electricity demand, temperature, and basic time information such as hour, day of the week, and month.
 
-### Ingestion
+## Main Features
 
-- Fetches hourly electricity demand data from the EIA API
-- Fetches hourly weather data from Open-Meteo
-- Handles EIA pagination beyond the 5,000-row response limit
-- Saves raw API payloads and request metadata
+- Downloads hourly electricity demand data from the EIA API
+- Downloads historical hourly temperature data from Open-Meteo
+- Stores the original API responses as JSON
+- Cleans and validates both datasets
+- Joins demand and weather records by UTC timestamp
+- Saves processed data as partitioned CSV files
+- Saves the merged dataset as CSV and Parquet
+- Writes a JSON summary for each pipeline run
+- Can optionally load the merged data into PostgreSQL
+- Can optionally upload generated files to Azure Blob Storage
+- Includes tests for the main transformation, validation, and storage functions
+- Includes a basic Streamlit dashboard for exploring the data
 
-### Transformation and Feature Generation
+## Output Columns
 
-- Cleans and standardizes raw EIA data
-- Cleans and standardizes weather data
-- Merges demand and weather data by timestamp
-- Adds basic time-based features:
-  - `hour`
-  - `day_of_week`
-  - `month`
+The final dataset contains the following columns:
 
-### Validation
-
-The pipeline includes validation checks for:
-
-- Empty DataFrames
-- Required columns
-- Missing values
-- Timestamp format
-- Non-negative demand values
-- Numeric temperature values
-- Duplicate timestamp-region pairs
-- Merge retention
-- Continuous hourly timestamp coverage
-
-### Outputs
-
-The pipeline writes:
-
-- Raw JSON payloads
-- Request metadata JSON files
-- Partitioned processed CSV files
-- Final feature datasets in CSV and Parquet
-- JSON run summaries
-- Optional PostgreSQL table output
-- Optional Azure Blob Storage artifacts
-
-### Testing and CI
-
-The project includes Pytest coverage for core local logic. Tests avoid live API calls and external services, making them suitable for local development and GitHub Actions CI.
-
-Current test areas include:
-
-- EIA transformation
-- Weather transformation
-- Feature merge logic
-- Validation checks
-- Run summary writing
-- Raw storage writing
-- CSV and Parquet partition writers
-- Storage writer behavior
+| Column | Description |
+|---|---|
+| `timestamp_utc` | Hourly timestamp in UTC |
+| `region` | Electricity market region |
+| `demand_mwh` | Hourly electricity demand in MWh |
+| `temperature_2m` | Hourly temperature in degrees Celsius |
+| `hour` | Hour in New York local time |
+| `day_of_week` | Day of the week, where Monday is 0 |
+| `month` | Month number |
 
 ## Project Structure
 
 ```text
 Electricity-Demand-Data-Pipeline/
-├─ .github/
-│  └─ workflows/
-│     └─ tests.yml
-│
-├─ dashboard/
-│  └─ app.py
-│
-├─ data/
-│  ├─ raw/
-│  │  ├─ eia_region_data/
-│  │  └─ weather_data/
-│  └─ processed/
-│     ├─ eia_region_data/
-│     ├─ weather_data/
-│     └─ demand_weather_features/
-│
-├─ docs/
-│  └─ images/
-│     ├─ dashboard_demand_analysis.png
-│     └─ dashboard_overview.png
-│
-├─ logs/
-│  └─ run_summaries/
-│     ├─ demand_weather_features/
-│     ├─ eia_region_data/
-│     └─ weather_data/
-│
-├─ scripts/
-│  ├─ __init__.py
-│  ├─ manual_postgres_writer_check.py
-│  └─ manual_azure_upload_check.py
-│
-├─ sql/
-│  └─ demand_weather_features.sql
-│
-├─ src/
-│  ├─ ingest/
-│  │  ├─ eia_client.py
-│  │  └─ weather_client.py
-│  │
-│  ├─ orchestration/
-│  │  └─ flows.py
-│  │
-│  ├─ pipeline/
-│  │  ├─ eia_pipeline.py
-│  │  ├─ weather_pipeline.py
-│  │  ├─ full_pipeline.py
-│  │  └─ feature_pipeline.py
-│  │
-│  ├─ storage/
-│  │  ├─ azure_blob_writer.py
-│  │  ├─ paths.py
-│  │  ├─ postgres_writer.py
-│  │  └─ write_raw.py
-│  │
-│  ├─ transform/
-│  │  ├─ eia_transform.py
-│  │  ├─ weather_transform.py
-│  │  └─ merge_features.py
-│  │
-│  ├─ utils/
-│  │  ├─ logger.py
-│  │  └─ run_summary.py
-│  │
-│  ├─ validation/
-│  │  └─ checks.py
-│  │
-│  ├─ cli.py
-│  └─ config.py
-│
-├─ tests/
-│  ├─ test_eia_transform.py
-│  ├─ test_weather_transform.py
-│  ├─ test_merge_features.py
-│  ├─ test_validation_checks.py
-│  ├─ test_run_summary.py
-│  ├─ test_storage_writers.py
-│  └─ test_raw_storage.py
-│
-├─ README.md
-├─ requirements.txt
-├─ .gitignore
-└─ .env.example
+├── dashboard/              # Streamlit dashboard
+├── data/                   # Generated raw and processed data
+├── logs/                   # Logs and pipeline run summaries
+├── scripts/                # Manual checks for external storage
+├── sql/                    # PostgreSQL table definition
+├── src/
+│   ├── ingest/             # EIA and weather API clients
+│   ├── pipeline/           # Pipeline entry points
+│   ├── storage/            # Local, PostgreSQL, and Azure writers
+│   ├── transform/          # Data cleaning and merge logic
+│   ├── utils/              # Logging and run-summary helpers
+│   └── validation/         # Data quality checks
+├── tests/                  # Pytest test suite
+├── .env.example
+├── requirements.txt
+└── README.md
 ```
 
-## Output Details
-
-### Raw Data
-
-Raw API responses are saved by run ID.
-
-```text
-data/raw/eia_region_data/_runs/<run_id>/raw.json
-data/raw/eia_region_data/_runs/<run_id>/request.json
-
-data/raw/weather_data/_runs/<run_id>/raw.json
-data/raw/weather_data/_runs/<run_id>/request.json
-```
-
-Raw payloads are stored separately from request metadata so that the original API responses can be inspected later.
-
-### Processed Data
-
-Processed source data is saved as partitioned CSV files by date.
-
-```text
-data/processed/eia_region_data/year=2025/month=01/day=01/part-<run_id>.csv
-data/processed/weather_data/year=2025/month=01/day=01/part-<run_id>.csv
-```
-
-### Feature Dataset
-
-The final demand-weather feature table is written in both CSV and Parquet format.
-
-```text
-data/processed/demand_weather_features/year=2025/month=01/day=01/part-<run_id>.csv
-data/processed/demand_weather_features/year=2025/month=01/day=01/part-<run_id>.parquet
-```
-
-Feature columns include:
-
-| Column | Description |
-|---|---|
-| `timestamp_utc` | Hourly timestamp in UTC |
-| `region` | Electricity region |
-| `demand_mwh` | Electricity demand |
-| `temperature_2m` | Hourly temperature from Open-Meteo |
-| `hour` | Hour extracted from timestamp |
-| `day_of_week` | Day of week extracted from timestamp |
-| `month` | Month extracted from timestamp |
-
-### Run Summaries
-
-Each pipeline run writes a JSON summary with metadata such as:
-
-- Row counts
-- Column counts
-- Timestamp range
-- Validation status
-- Output formats
-- Merge retention rate
-- Timestamp coverage status
-- Pipeline duration
-- PostgreSQL load status, if enabled
-- Azure upload status, if enabled
-
-Example paths:
-
-```text
-logs/run_summaries/eia_region_data/<run_id>.json
-logs/run_summaries/weather_data/<run_id>.json
-logs/run_summaries/demand_weather_features/<run_id>.json
-```
-
-## PostgreSQL Load
-
-The project supports an optional PostgreSQL load for the final `demand_weather_features` table.
-
-The schema is defined in:
-
-```text
-sql/demand_weather_features.sql
-```
-
-When enabled, the pipeline creates the table if needed and upserts records using `(region, timestamp_utc)` as the primary key. This allows rerunning the pipeline without creating duplicate hourly records.
-
-```env
-ENABLE_POSTGRES_LOAD=false
-DATABASE_URL=postgresql+psycopg2://username:password@localhost:5432/electricity_pipeline
-```
-
-PostgreSQL loading is disabled by default so local development, tests, and CI do not require a running database or database credentials.
-
-## Azure Blob Storage
-
-The project supports optional Azure Blob Storage uploads for generated artifacts.
-
-When enabled, the pipeline uploads:
-
-- Raw API payloads
-- Request metadata
-- Processed CSV outputs
-- Feature CSV and Parquet outputs
-- Run summary JSON files
-
-```env
-ENABLE_AZURE_UPLOAD=false
-AZURE_STORAGE_CONNECTION_STRING=your_azure_storage_connection_string_here
-AZURE_STORAGE_CONTAINER=electricity-pipeline
-```
-
-Azure upload is disabled by default. Secrets should be stored only in a local `.env` file or secure environment variable and should never be committed to GitHub.
-
-## Streamlit Dashboard
-
-The repository includes a basic PostgreSQL-backed Streamlit dashboard in:
-
-```text
-dashboard/app.py
-```
-
-The dashboard reads from the PostgreSQL `demand_weather_features` table and provides a first analytics layer for exploring the merged dataset.
-
-Current dashboard features include:
-
-- Summary metric cards
-- Temperature vs. demand scatter chart
-- Daily average demand trend
-- Highest-demand hours table
-- Highest-demand days table
-- Temperature bucket analysis
-- Basic outlier checks
-- Sidebar filters for date, month, and temperature range
-
-Run the dashboard locally after the PostgreSQL table has been loaded:
-
-```bash
-streamlit run dashboard/app.py
-```
-
-## Orchestration
-
-The project includes a Prefect flow wrapper for the end-to-end feature pipeline.
-
-To run the orchestration flow with the local Prefect UI, start the Prefect server first:
-```bash
-prefect server start
-```
-
-Then, in a second terminal, run:
-```bash
-python -m src.orchestration.flows
-```
-
-By default, the local Prefect API runs at:
-```text
-http://127.0.0.1:4200/api
-```
-
-If the flow cannot reach the Prefect API, make sure the local Prefect server is running.
-
-The current flow is split into separate tasks for:
-
-1. EIA ingestion
-2. Weather ingestion
-3. Feature dataset creation
-
-This provides more visibility into each stage of the pipeline than running everything as one large script.
-
-## Quickstart
+## Setup
 
 ### 1. Clone the repository
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/Ai-C-12/Electricity-Demand-Data-Pipeline.git
 cd Electricity-Demand-Data-Pipeline
 ```
 
-### 2. Create and activate a virtual environment
+### 2. Create a virtual environment
 
 ```bash
 python -m venv venv
 ```
 
-Windows:
+Activate it on Windows:
 
 ```bash
 venv\Scripts\activate
 ```
 
-macOS/Linux:
+Activate it on macOS or Linux:
 
 ```bash
 source venv/bin/activate
 ```
 
-### 3. Install dependencies
+### 3. Install the dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Configure environment variables
+### 4. Configure the EIA API key
 
-Create a local `.env` file or set the variables in your shell.
-
-Required:
+Create a `.env` file in the project root:
 
 ```env
 EIA_API_KEY=your_eia_api_key_here
 ```
 
-Optional PostgreSQL load:
+The PostgreSQL and Azure settings in `.env.example` are optional.
+
+## Running the Core Pipeline
+
+Run the complete demand and historical-weather pipeline with:
+
+```bash
+python -c "from src.pipeline.feature_pipeline import run_feature_pipeline; run_feature_pipeline()"
+```
+
+This command:
+
+1. Downloads electricity demand data.
+2. Downloads historical weather data.
+3. Cleans and validates both datasets.
+4. Merges them by timestamp.
+5. Writes the final CSV and Parquet files.
+6. Writes a JSON run summary.
+
+The default date range and location settings are stored in `src/config.py`.
+
+## Generated Files
+
+Raw API responses are stored under:
+
+```text
+data/raw/
+```
+
+Processed source data and the merged feature dataset are stored under:
+
+```text
+data/processed/
+```
+
+The files are partitioned by year, month, and day. For example:
+
+```text
+data/processed/demand_weather_features/
+└── year=2025/
+    └── month=01/
+        └── day=01/
+            ├── part-<run_id>.csv
+            └── part-<run_id>.parquet
+```
+
+Run summaries are stored under:
+
+```text
+logs/run_summaries/
+```
+
+Each summary records information such as the row count, timestamp range, validation result, output formats, and pipeline duration.
+
+## Optional PostgreSQL Load
+
+To load the final dataset into PostgreSQL, add the following values to `.env`:
 
 ```env
-ENABLE_POSTGRES_LOAD=false
+ENABLE_POSTGRES_LOAD=true
 DATABASE_URL=postgresql+psycopg2://username:password@localhost:5432/electricity_pipeline
 ```
 
-Optional Azure upload:
+The pipeline creates the required table and upserts records using the region and timestamp as the key.
+
+PostgreSQL loading is disabled by default.
+
+## Optional Azure Upload
+
+To upload generated files to Azure Blob Storage, add the following values to `.env`:
 
 ```env
-ENABLE_AZURE_UPLOAD=false
-AZURE_STORAGE_CONNECTION_STRING=your_azure_storage_connection_string_here
+ENABLE_AZURE_UPLOAD=true
+AZURE_STORAGE_CONNECTION_STRING=your_connection_string
 AZURE_STORAGE_CONTAINER=electricity-pipeline
 ```
 
-Do not commit API keys, database URLs, or cloud credentials.
+Azure uploads are disabled by default.
 
-## Running the Project
+## Dashboard
 
-| Task | Command |
-|---|---|
-| Run EIA pipeline | `python -m src.pipeline.eia_pipeline` |
-| Run weather pipeline | `python -m src.pipeline.weather_pipeline` |
-| Run both source pipelines | `python -m src.pipeline.full_pipeline` |
-| Run full feature pipeline | `python -m src.pipeline.feature_pipeline` |
-| Run Prefect-orchestrated feature pipeline | `python -m src.orchestration.flows` |
-| Run Streamlit dashboard | `streamlit run dashboard/app.py` |
-| Run tests | `pytest` |
+The Streamlit dashboard reads the merged dataset from PostgreSQL.
 
-## Current Development Range
+After loading the data into PostgreSQL, run:
 
-The current dataset covers one year of hourly data for the `NYIS` region.
-
-```text
-2025-01-01 00:00 UTC -> 2025-12-31 23:00 UTC
+```bash
+streamlit run dashboard/app.py
 ```
 
-A larger 3-year scale test from 2023 to 2025 produced 26,304 merged hourly feature rows.
+The dashboard includes summary metrics, demand trends, temperature comparisons, and tables of high-demand periods.
 
-## Roadmap
+## Tests
 
-Planned next steps:
+Run the test suite with:
 
-1. Add a forecasting-ready machine learning workflow.
-2. Add Docker support or scheduled Prefect deployments.
-3. Improve production-oriented orchestration and monitoring patterns.
-4. Expand the dashboard after the core pipeline and analytics layer are stable.
+```bash
+pytest
+```
 
-## Why I Built This
+The tests cover the main transformation, validation, merging, run-summary, and local-storage functions.
 
-I built this project to practice the core pieces of a production-style data engineering workflow:
+## Purpose
 
-- ingesting data from external APIs
-- preserving raw source data
-- validating and transforming records
-- creating analytics-ready feature tables
-- writing repeatable database loads
-- adding test coverage and CI
-- using orchestration for pipeline visibility
-- connecting pipeline output to a basic analytics interface
-
-The project is intended as a portfolio-grade foundation for data engineering, analytics, and future forecasting work.
+This project was created to practice building a complete data pipeline using public APIs. Its main focus is collecting data, checking its quality, combining related datasets, and producing files that can be used for further analysis.
