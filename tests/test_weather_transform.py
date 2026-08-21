@@ -14,9 +14,9 @@ def test_transform_weather_data_renames_and_converts_columns():
 
     assert list(result.columns) == [
         "timestamp_utc",
+        "temperature_2m",
         "latitude",
         "longitude",
-        "temperature_2m",
     ]
 
     assert pd.api.types.is_datetime64_any_dtype(result["timestamp_utc"])

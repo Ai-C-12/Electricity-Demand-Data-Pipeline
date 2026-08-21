@@ -39,7 +39,7 @@ def test_validation_checks_pass_on_valid_dataframe():
     check_no_missing_values(df, dataset_name)
     check_timestamp_format(df, dataset_name)
     check_demand_values(df, dataset_name)
-    check_temperature_values(df, dataset_name)
+    check_temperature_values(df, dataset_name, "temperature_2m")
     check_duplicate_timestamps_region(df, dataset_name)
 
 
@@ -100,7 +100,7 @@ def test_check_temperature_values_raises_on_non_numeric():
     df["temperature_2m"] = ["cold", "warm"]
 
     with pytest.raises(ValueError):
-        check_temperature_values(df, "Test Feature Dataset")
+        check_temperature_values(df, "Test Feature Dataset", "temperature_2m")
 
 
 def test_check_duplicate_timestamps_region_raises_on_duplicates():

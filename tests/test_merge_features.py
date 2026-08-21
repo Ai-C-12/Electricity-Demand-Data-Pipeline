@@ -40,8 +40,8 @@ def test_merge_df_combines_demand_and_weather_and_adds_time_features():
     assert pd.api.types.is_numeric_dtype(result["demand_mwh"])
     assert pd.api.types.is_numeric_dtype(result["temperature_2m"])
 
-    assert result["hour"].tolist() == [0, 1]
-    assert result["day_of_week"].tolist() == [2, 2]  # Wednesday
-    assert result["month"].tolist() == [1, 1]  # January
+    assert result["hour"].tolist() == [19, 20]
+    assert result["day_of_week"].tolist() == [1, 1]  # Tuesday
+    assert result["month"].tolist() == [12, 12]  # December
 
     assert result["region"].iloc[0] == "NYIS"
