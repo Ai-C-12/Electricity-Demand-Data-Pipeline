@@ -1,7 +1,5 @@
 import pandas as pd
 
-import pandas as pd
-
 
 def split_forecasting_data(
     df: pd.DataFrame,
