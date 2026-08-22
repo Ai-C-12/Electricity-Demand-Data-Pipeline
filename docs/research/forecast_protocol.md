@@ -96,3 +96,45 @@ Ridge mean validation metrics:
     'normalized_mae_percent': 8.896902218559612
 }
 ```
+
+
+## Gradient Boosting Regression Models
+### Gradient Boosting A (demand_lag_168)
+```txt
+{
+    'mae_mwh': 1550.6176228366548, 
+    'rmse_mwh': 2296.2538198392413, 
+    'mean_signed_error_mwh': -161.29120345977753, 
+    'normalized_mae_percent': 8.9463857316407
+}
+```
+
+### Gradient Boosting B (demand_lag_168 + hour + day_of_week + month)
+```txt
+Gradient Boost B mean validation metrics (Raw calendar): 
+{
+    'mae_mwh': 1375.8250894699954, 
+    'rmse_mwh': 1896.831902734659, 
+    'mean_signed_error_mwh': -120.01709496934305, 
+    'normalized_mae_percent': 7.937909235902109
+}
+
+Gradient Boost B mean validation metrics (Encoded calendar):
+{
+    'mae_mwh': 1420.4732965587546, 
+    'rmse_mwh': 1928.1638883253174, 
+    'mean_signed_error_mwh': -100.39838716482535, 
+    'normalized_mae_percent': 8.195509869971707
+}
+```
+
+### Gradient Boosting C (demand_lag_168 + calendar features + temperature_forecast_24h)
+```txt
+Gradient Boost C mean validation metrics: 
+{
+    'mae_mwh': 963.0146854153428, 
+    'rmse_mwh': 1334.7953819862196, 
+    'mean_signed_error_mwh': 22.54605489330662, 
+    'normalized_mae_percent_mwh': 5.556173691099507
+}
+```
