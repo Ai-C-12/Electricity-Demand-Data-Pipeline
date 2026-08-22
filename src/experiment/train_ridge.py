@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 from sklearn.linear_model import Ridge
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import mean_absolute_error, root_mean_squared_error
 
@@ -64,9 +64,26 @@ if __name__ == "__main__":
 
 
     # Ridge B
+    # Raw Calendar
+    raw_ridge_b_feature_columns = [
+        "demand_lag_168", 
+        "hour",
+        "day_of_week",
+        "month",
+    ]
+
+    raw_results_B = train_and_evaluate_ridge(
+        train_df,
+        validation_df,
+        raw_ridge_b_feature_columns,
+    )
+
+    print(f"Ridge B mean validation metrics (Raw Calendar): {raw_results_B}")
+
+    # Encoded Calendar
     train_df_encoded, validation_df_encoded = add_calendar_encoding(train_df, validation_df)
 
-    ridge_b_feature_columns = [
+    encoded_ridge_b_feature_columns = [
         "demand_lag_168", 
         "hour_sin",
         "hour_cos",
@@ -81,13 +98,13 @@ if __name__ == "__main__":
         "month_cos",
     ]
     
-    results_B = train_and_evaluate_ridge(
+    encoded_results_B = train_and_evaluate_ridge(
         train_df_encoded,
         validation_df_encoded,
-        ridge_b_feature_columns,
+        encoded_ridge_b_feature_columns,
     )
 
-    print(f"Ridge B mean validation metrics: {results_B}")
+    print(f"Ridge B mean validation metrics (Encoded Calendar): {encoded_results_B}")
 
 
     # Ridge C
